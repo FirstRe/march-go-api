@@ -7,7 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-graphql/cmd/app/graph/types"
+	"march-auth/cmd/app/graph/types"
 	"strconv"
 	"sync"
 	"sync/atomic"

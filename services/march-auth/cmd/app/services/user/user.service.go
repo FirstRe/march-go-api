@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 
-	"go-graphql/cmd/app/common"
-	gormDb "go-graphql/cmd/app/common/gorm"
-	"go-graphql/cmd/app/graph/model"
-	"go-graphql/cmd/app/graph/types"
+	"march-auth/cmd/app/common"
+	gormDb "march-auth/cmd/app/common/gorm"
+	"march-auth/cmd/app/graph/model"
+	"march-auth/cmd/app/graph/types"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -51,7 +51,7 @@ func CreateUser(input *types.UserInputParams) (*types.ResponseCreateUser, error)
 	}
 
 	userResponse := types.User{
-		ID: userCreate.ID,
+		ID:        userCreate.ID,
 		Name:      userCreate.Name,
 		Email:     userCreate.Email,
 		CreatedAt: userCreate.CreatedAt,
@@ -76,7 +76,7 @@ func Price() (*types.Price, error) {
 
 	fmt.Println(formattedPrice)
 	return price, nil
-	
+
 }
 
 func Login(input *types.LoginInputParams) (*types.ResponseLogin, error) {

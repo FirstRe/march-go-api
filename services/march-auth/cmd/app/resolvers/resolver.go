@@ -1,6 +1,6 @@
 package resolvers
 
-import model "go-graphql/cmd/app/graph/model"
+import model "march-auth/cmd/app/graph/model"
 
 // This file will not be regenerated automatically.
 //

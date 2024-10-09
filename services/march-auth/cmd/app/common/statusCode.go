@@ -1,7 +1,7 @@
 package common
 
 import (
-	"go-graphql/cmd/app/graph/types"
+	"march-auth/cmd/app/graph/types"
 	"net/http"
 )
 

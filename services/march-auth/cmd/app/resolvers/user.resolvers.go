@@ -8,11 +8,11 @@ import (
 	"context"
 	"fmt"
 
-	"go-graphql/cmd/app/common"
-	"go-graphql/cmd/app/common/helper"
-	graph "go-graphql/cmd/app/graph/generated"
-	"go-graphql/cmd/app/graph/types"
-	userService "go-graphql/cmd/app/services/user"
+	"march-auth/cmd/app/common"
+	"march-auth/cmd/app/common/helper"
+	graph "march-auth/cmd/app/graph/generated"
+	"march-auth/cmd/app/graph/types"
+	userService "march-auth/cmd/app/services/user"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -47,7 +47,7 @@ func (r *queryResolver) GetPrice(ctx context.Context) (*types.Price, error) {
 	logctx := helper.LogContext(ClassName, "GetPrice")
 	logctx.Logger([]interface{}{})
 
-	response,err := userService.Price()
+	response, err := userService.Price()
 
 	return response, err
 }
