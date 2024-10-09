@@ -1,0 +1,10 @@
+# air.toml
+root = "."  # Project root directory
+
+[[watcher]]
+paths = ["."]
+
+[[runner]]
+name = "github.com/firstre"  # Change this to your application name
+command = "go"
+args = ["run", "cmd/app/server.go"]  # Adjust this if your entry point is different

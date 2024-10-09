@@ -1,0 +1,70 @@
+directive @goField(
+  forceResolver: Boolean
+  name: String
+) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+# new directive
+directive @auth on FIELD_DEFINITION
+
+scalar DateTime
+
+type Status {
+  message: String
+  code: Int
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ResponseCreateUser {
+  data: User
+  status: Status
+}
+
+type ResponseGetUser {
+  data: [User]
+  status: Status
+}
+
+type Token {
+  access_token: String!
+  refresh_token: String
+  username: String
+  userId: String
+}
+
+type ResponseLogin {
+  data: Token
+  status: Status
+}
+
+input UserInputParams {
+  name: String!
+  password: String!
+  email: String!
+}
+
+input LoginInputParams {
+  username: String!
+  password: String!
+}
+
+type Price {
+  price: Float!
+}
+
+type Query {
+  getUsers: ResponseGetUser
+  test: Status @auth
+  getPrice: Price
+}
+
+type Mutation {
+  createUser(input: UserInputParams!): ResponseCreateUser
+  login(input: LoginInputParams!): ResponseLogin
+}

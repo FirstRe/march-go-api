@@ -1,0 +1,45 @@
+# Where are all the schema files located? globs are supported eg  src/**/*.graphqls
+schema:
+  - cmd/app/schema/*.graphqls
+
+# Where should the generated server code go?
+exec:
+  filename: cmd/app/graph/generated/generated.go
+  package: graph
+
+# Where should any generated dao go?
+model:
+  filename: cmd/app/graph/types/models_gen.go
+  package: types
+
+# Where should the resolver implementations go?
+resolver:
+  layout: follow-schema
+  dir: cmd/app/resolvers
+  package: resolvers
+  filename_template: "{name}.resolvers.go"
+  type: Resolver
+
+# autobind:
+#   - "github.com/firstre/cmd/app/graph/model"
+
+# your liking
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+  # User:
+  #   model: github.com/firstre/cmd/app/graph/model.User
+  # Post:
+  #   model: github.com/firstre/cmd/app/graph/model.Post
+  #   fields:
+  #     user:
+  #       resolver: true

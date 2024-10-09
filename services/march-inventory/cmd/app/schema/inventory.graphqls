@@ -1,0 +1,206 @@
+directive @goField(
+  forceResolver: Boolean
+  name: String
+) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+# new directive
+directive @auth on FIELD_DEFINITION
+
+scalar DateTime
+
+enum FavoriteStatus {
+  LIKE
+  DEFAULT
+}
+
+enum DeletedType {
+  inventory
+  inventoryType
+  inventoryBrand
+  inventoryBranch
+}
+
+enum DeletedMode {
+  RECOVERY
+  DELETE
+}
+
+type Status {
+  code: Int!
+  message: String
+}
+
+type ResponseId {
+  id: String
+}
+
+# Inventory Types
+type Inventory {
+  id: String
+  inventoryTypeId: String
+  name: String!
+  amount: Int!
+  sold: Int
+  sku: String
+  serialNumber: String
+  size: String
+  priceMember: Int
+  price: Int!
+  reorderLevel: Int
+  expiryDate: String!
+  inventoryBrand: InventoryBrand
+  inventoryBranch: InventoryBranch
+  inventoryType: InventoryType
+  favorite: Boolean
+  description: String
+  createdBy: String
+  updatedBy: String
+  updatedAt: String!
+  createdAt: String!
+}
+
+type InventoryDataResponse {
+  data: Inventory
+  status: Status
+}
+
+type InventoriesResponse {
+  data: ResponseInventories
+  status: Status
+}
+
+type ResponseInventories {
+  inventories: [Inventory]
+  pageLimit: Int
+  pageNo: Int
+  totalPage: Int
+  totalRow: Int
+}
+
+input UpsertInventoryInput {
+  id: String
+  name: String!
+  inventoryTypeId: String!
+  inventoryBrandId: String!
+  inventoryBranchId: String!
+  favorite: Boolean
+  amount: Int!
+  sku: String
+  serialNumber: String
+  reorderLevel: Int
+  size: SizeInventory
+  price: Int!
+  priceMember: Int
+  expiryDate: String!
+  description: String
+  createdBy: String
+  updatedBy: String
+}
+
+type MutationInventoryResponse {
+  data: ResponseId
+  status: Status
+}
+
+type DeleteInventoryResponse {
+  data: ResponseId
+  status: Status
+}
+
+input ParamsInventory {
+  search: String
+  favorite: FavoriteStatus
+  type: [String]
+  brand: [String]
+  branch: [String]
+  pageNo: Int
+  limit: Int
+}
+
+input UploadInventoryInput {
+  uploadDatas: [UpsertInventoryInput]
+  fileName: String
+}
+
+type UploadInventoryResponse {
+  data: UploadInventory
+  status: Status
+}
+
+type UploadInventory {
+  id: String
+  success: Boolean
+  reason: String
+}
+
+type DeletedInventoryResponse {
+  data: DeletedInventory
+  status: Status
+}
+
+type DeletedInventoryType {
+  id: String
+  name: String
+  createdBy: String
+  updatedBy: String
+  updatedAt: String!
+  createdAt: String!
+}
+
+type DeletedInventory {
+  inventory: [DeletedInventoryType]
+  brand: [DeletedInventoryType]
+  branch: [DeletedInventoryType]
+  type: [DeletedInventoryType]
+}
+
+input RecoveryHardDeletedInput {
+  id: String!
+  type: DeletedType!
+  mode: DeletedMode!
+}
+
+type RecoveryHardDeleted {
+  id: String
+  type: DeletedType
+  mode: DeletedMode
+}
+
+type RecoveryHardDeletedResponse {
+  data: RecoveryHardDeleted
+  status: Status
+}
+
+type InventoryName {
+  id: String
+  name: String
+}
+
+input SizeInventory {
+  weight: Int
+  width: Int
+  length: Int
+  height: Int
+}
+
+type InventoryNameResponse {
+  data: [InventoryName]
+  status: Status
+}
+
+extend type Query {
+  getInventoryNames: InventoryNameResponse
+  getInventory(id: String): InventoryDataResponse @auth
+  getInventories(params: ParamsInventory): InventoriesResponse
+  getInventoryAllDeleted: DeletedInventoryResponse
+}
+
+extend type Mutation {
+  uploadInventory(input: UploadInventoryInput!): UploadInventoryResponse
+  upsertInventory(input: UpsertInventoryInput!): MutationInventoryResponse
+  deleteInventory(id: String!): MutationInventoryResponse
+  favoriteInventory(id: String!): MutationInventoryResponse
+  recoveryHardDeleted(
+    input: RecoveryHardDeletedInput!
+  ): RecoveryHardDeletedResponse
+}

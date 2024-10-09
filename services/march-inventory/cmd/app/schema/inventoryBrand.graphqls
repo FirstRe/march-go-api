@@ -1,0 +1,50 @@
+type InventoryBrand {
+  id: String
+  name: String
+  description: String
+  createdBy: String
+  updatedBy: String
+  updatedAt: String!
+  createdAt: String!
+}
+
+type InventoryBrandsDataResponse {
+  data: [InventoryBrand]
+  status: Status
+}
+
+input UpsertInventoryBrandInput {
+  id: String
+  name: String!
+  description: String
+  createdBy: String
+  updatedBy: String
+}
+
+type MutationInventoryBrandResponse {
+  data: ResponseId
+  status: Status
+}
+
+type DeleteInventoryBrandResponse {
+  data: ResponseId
+  status: Status
+}
+
+input ParamsInventoryBrand {
+  search: String
+  offset: Int
+  limit: Int
+}
+
+type Query {
+  getInventoryBrand(id: String): InventoryBrand
+  getInventoryBrands(params: ParamsInventoryBrand): InventoryBrandsDataResponse
+}
+
+type Mutation {
+  upsertInventoryBrand(
+    input: UpsertInventoryBrandInput!
+  ): MutationInventoryBrandResponse
+  deleteInventoryBrand(id: String!): MutationInventoryBrandResponse
+}

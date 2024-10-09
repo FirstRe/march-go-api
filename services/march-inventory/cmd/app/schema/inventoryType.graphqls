@@ -1,0 +1,55 @@
+type InventoryType {
+  id: String
+  name: String
+  description: String
+  createdBy: String
+  updatedBy: String
+  updatedAt: String!
+  createdAt: String!
+}
+
+type InventoryTypeResponse {
+  data: InventoryType
+  status: Status
+}
+
+type InventoryTypesResponse {
+  data: [InventoryType]
+  status: Status
+}
+
+input UpsertInventoryTypeInput {
+  id: String
+  name: String!
+  description: String
+  createdBy: String
+  updatedBy: String
+}
+
+type MutationInventoryTypeResponse {
+  data: ResponseId
+  status: Status
+}
+
+type DeleteInventoryTypeResponse {
+  data: ResponseId
+  status: Status
+}
+
+input ParamsInventoryType {
+  search: String
+  offset: Int
+  limit: Int
+}
+
+extend type Mutation {
+  upsertInventoryType(
+    input: UpsertInventoryTypeInput!
+  ): MutationInventoryResponse @auth
+  deleteInventoryType(id: String!): MutationInventoryResponse @auth
+}
+
+extend type Query {
+  getInventoryType(id: String): InventoryTypeResponse @auth
+  getInventoryTypes(params: ParamsInventoryType): InventoryTypesResponse @auth
+}
