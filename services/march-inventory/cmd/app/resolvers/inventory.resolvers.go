@@ -6,9 +6,13 @@ package resolvers
 
 import (
 	"context"
+	"core/app/helper"
+	"core/app/middlewares"
 	"fmt"
+	"log"
 	"march-inventory/cmd/app/common"
 	"march-inventory/cmd/app/graph/types"
+	"march-inventory/cmd/app/services/inventoryService"
 )
 
 // UploadInventory is the resolver for the uploadInventory field.
@@ -18,7 +22,12 @@ func (r *mutationResolver) UploadInventory(ctx context.Context, input types.Uplo
 
 // UpsertInventory is the resolver for the upsertInventory field.
 func (r *mutationResolver) UpsertInventory(ctx context.Context, input types.UpsertInventoryInput) (*types.MutationInventoryResponse, error) {
-	panic(fmt.Errorf("not implemented: UpsertInventory - upsertInventory"))
+	logctx := helper.LogContext(ClassName, "UpsertInventory")
+	userInfo := middlewares.UserInfo(ctx)
+	logctx.Logger([]interface{}{}, "")
+	log.Printf("userInfo: %+v", userInfo)
+
+	return inventoryService.UpsertInventory(input)
 }
 
 // DeleteInventory is the resolver for the deleteInventory field.

@@ -6,7 +6,7 @@ package resolvers
 
 import (
 	"context"
-	"march-inventory/cmd/app/common/helper"
+	"core/app/helper"
 	graph "march-inventory/cmd/app/graph/generated"
 	"march-inventory/cmd/app/graph/types"
 	"march-inventory/cmd/app/services/inventoryService"

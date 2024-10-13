@@ -6,7 +6,8 @@ package resolvers
 
 import (
 	"context"
-	"march-inventory/cmd/app/common/helper"
+	"core/app/helper"
+	"core/app/middlewares"
 	"march-inventory/cmd/app/graph/types"
 	"march-inventory/cmd/app/services/inventoryService"
 )
@@ -15,8 +16,9 @@ import (
 func (r *mutationResolver) UpsertInventoryType(ctx context.Context, input types.UpsertInventoryTypeInput) (*types.MutationInventoryResponse, error) {
 	logctx := helper.LogContext(ClassName, "UpsertInventoryType")
 
-	// userInfo := middlewares.UserInfo(ctx)
-	logctx.Logger([]interface{}{}, "")
+	userInfo := middlewares.UserInfo(ctx)
+
+	logctx.Logger([]interface{}{userInfo}, "userInfo")
 
 	// return nil, nil
 

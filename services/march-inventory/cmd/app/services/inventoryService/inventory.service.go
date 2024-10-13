@@ -1,25 +1,23 @@
 package inventoryService
 
 import (
-	"core/app/helper"
+	. "core/app/helper"
 	"errors"
 	"log"
 	"march-inventory/cmd/app/common"
 	gormDb "march-inventory/cmd/app/common/gorm"
+	"march-inventory/cmd/app/dto"
 	"march-inventory/cmd/app/graph/model"
 	"march-inventory/cmd/app/graph/types"
-
 	"gorm.io/gorm"
 )
 
-const ClassName string = "InventoryService"
-
-func UpsertInventoryType(input *types.UpsertInventoryTypeInput) (*types.MutationInventoryResponse, error) {
-	logctx := helper.LogContext(ClassName, "UpsertInventoryType")
+func UpsertInventory(input types.UpsertInventoryInput) (*types.MutationInventoryResponse, error) {
+	logctx := LogContext(ClassName, "UpsertInventory")
 	logctx.Logger([]interface{}{input}, "input")
 
-	findDup := model.InventoryType{}
-	gormDb.Repos.Model(&model.InventoryType{}).Where("name = ?", input.Name).Find(&findDup)
+	findDup := model.Inventory{}
+	gormDb.Repos.Model(&model.Inventory{}).Where("name = ?", input.Name).Find(&findDup)
 
 	if findDup.Name != "" && input.ID == nil {
 		reponseError := types.MutationInventoryResponse{
@@ -36,41 +34,40 @@ func UpsertInventoryType(input *types.UpsertInventoryTypeInput) (*types.Mutation
 		}
 		return &reponseError, nil
 	}
+	log.Printf("inventoryData: %+v", input)
 
-	inventoryTypeData := model.InventoryType{
-		Name:        input.Name,
-		Description: input.Description,
-		CreatedBy:   "system",
-		UpdatedBy:   "system",
-	}
+	inventoryData := dto.MapInputToInventory(input)
 
+	log.Printf("inventoryData: %+v", inventoryData)
 	if input.ID != nil {
-		inventoryTypeData.ID = *input.ID
-		inventoryTypeData.CreatedBy = findDup.CreatedBy
-		inventoryTypeData.UpdatedBy = findDup.UpdatedBy
-		inventoryTypeData.Deleted = findDup.Deleted
+		inventoryData.ID = *input.ID
 		log.Printf("input.ID: %+v", input.ID)
 	}
 
-	log.Printf("inventoryTypeData%+v", inventoryTypeData)
+	log.Printf("inventoryData: %+v", inventoryData)
 
-	if err := gormDb.InventoryType.Save(&inventoryTypeData).Error; err != nil {
+	if err := gormDb.Repos.Model(&inventoryData).Save(&inventoryData).Error; err != nil {
 		if errors.Is(err, gorm.ErrMissingWhereClause) {
 			log.Printf("err ErrMissingWhereClause: %+v", err)
-			if err := gormDb.InventoryType.Save(&inventoryTypeData).Where("id = ?", inventoryTypeData.ID).Error; err != nil {
+			if err := gormDb.Repos.Model(&inventoryData).Save(&inventoryData).Where("id = ?", inventoryData.ID).Error; err != nil {
 				log.Printf("err Create: %+v", err)
 			} else {
 				reponsePass := types.MutationInventoryResponse{
 					Status: common.StatusResponse(200, "OK"),
 					Data: &types.ResponseID{
-						ID: &inventoryTypeData.ID,
+						ID: &inventoryData.ID,
 					},
 				}
 				return &reponsePass, nil
 			}
+		} else if errors.Is(err, gorm.ErrForeignKeyViolated) {
+			reponseError := types.MutationInventoryResponse{
+				Status: common.StatusResponse(400, "Bad Request"),
+				Data:   nil,
+			}
+			return &reponseError, nil
 		} else {
 			log.Printf("err Create: %+v", err)
-
 		}
 		reponseError := types.MutationInventoryResponse{
 			Status: common.StatusResponse(500, "CREATE ERROR"),
@@ -79,19 +76,19 @@ func UpsertInventoryType(input *types.UpsertInventoryTypeInput) (*types.Mutation
 		return &reponseError, nil
 	}
 
-	log.Printf("inventoryTypeData%+v", inventoryTypeData)
+	log.Printf("inventoryData: %+v", inventoryData)
 
 	reponsePass := types.MutationInventoryResponse{
 		Status: common.StatusResponse(200, "OK"),
 		Data: &types.ResponseID{
-			ID: &inventoryTypeData.ID,
+			ID: &inventoryData.ID,
 		},
 	}
 	return &reponsePass, nil
 }
 
-func DeleteInventoryType(id string) (*types.MutationInventoryResponse, error) {
-	logctx := helper.LogContext(ClassName, "DeleteInventoryType")
+func DeleteInventoryTypes(id string) (*types.MutationInventoryResponse, error) {
+	logctx := LogContext(ClassName, "DeleteInventoryType")
 	logctx.Logger([]interface{}{id}, "id")
 
 	inventoryType := model.InventoryType{}
@@ -128,15 +125,16 @@ func DeleteInventoryType(id string) (*types.MutationInventoryResponse, error) {
 	return &reponseSuccess, nil
 }
 
-func GetInventoryTypes(params *types.ParamsInventoryType) (*types.InventoryTypesResponse, error) {
-	logctx := helper.LogContext(ClassName, "GetInventoryTypes")
+func GetInventoryTypess(params *types.ParamsInventoryType) (*types.InventoryTypesResponse, error) {
+	logctx := LogContext(ClassName, "GetInventoryTypes")
 	logctx.Logger([]interface{}{}, "id")
 	inventoryTypes := []model.InventoryType{}
-
 	searchParam := ""
+
 	if params != nil && params.Search != nil {
 		searchParam = "%" + *params.Search + "%"
 	}
+
 	log.Printf("searchParam: %+v", searchParam)
 
 	if err := gormDb.Repos.Model(&inventoryTypes).Where("name LIKE ?", searchParam).Not("deleted = ?", true).Order("created_at asc").Find(&inventoryTypes).Error; err != nil {
@@ -165,8 +163,8 @@ func GetInventoryTypes(params *types.ParamsInventoryType) (*types.InventoryTypes
 	return &reponsePass, nil
 }
 
-func GetInventoryType(id *string) (*types.InventoryTypeResponse, error) {
-	logctx := helper.LogContext(ClassName, "GetInventoryType")
+func GetInventoryTypesss(id *string) (*types.InventoryTypeResponse, error) {
+	logctx := LogContext(ClassName, "GetInventoryType")
 	logctx.Logger([]interface{}{id}, "id")
 	inventoryType := model.InventoryType{}
 	if err := gormDb.Repos.Model(&inventoryType).Where("id = ?", id).First(&inventoryType).Error; err != nil {
