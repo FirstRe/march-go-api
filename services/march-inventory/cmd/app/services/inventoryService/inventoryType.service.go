@@ -61,7 +61,7 @@ func UpsertInventoryType(input *types.UpsertInventoryTypeInput) (*types.Mutation
 				log.Printf("err Create: %+v", err)
 			} else {
 				reponsePass := types.MutationInventoryResponse{
-					Status: common.StatusResponse(200, "OK"),
+					Status: common.StatusResponse(1000, "OK"),
 					Data: &types.ResponseID{
 						ID: &inventoryTypeData.ID,
 					},
@@ -82,7 +82,7 @@ func UpsertInventoryType(input *types.UpsertInventoryTypeInput) (*types.Mutation
 	log.Printf("inventoryTypeData%+v", inventoryTypeData)
 
 	reponsePass := types.MutationInventoryResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: common.StatusResponse(1000, "OK"),
 		Data: &types.ResponseID{
 			ID: &inventoryTypeData.ID,
 		},
@@ -122,7 +122,7 @@ func DeleteInventoryType(id string) (*types.MutationInventoryResponse, error) {
 	}
 
 	reponseSuccess := types.MutationInventoryResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: common.StatusResponse(1000, "OK"),
 		Data:   nil,
 	}
 	return &reponseSuccess, nil
@@ -158,7 +158,7 @@ func GetInventoryTypes(params *types.ParamsInventoryType) (*types.InventoryTypes
 	}
 
 	reponsePass := types.InventoryTypesResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: common.StatusResponse(1000, "OK"),
 		Data:   inventoryTypesData,
 	}
 
@@ -197,7 +197,7 @@ func GetInventoryType(id *string) (*types.InventoryTypeResponse, error) {
 	}
 
 	reponsePass := types.InventoryTypeResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: common.StatusResponse(1000, "OK"),
 		Data:   &inventoryTypeData,
 	}
 

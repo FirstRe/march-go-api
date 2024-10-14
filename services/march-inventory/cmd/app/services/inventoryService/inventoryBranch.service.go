@@ -59,7 +59,7 @@ func UpsertInventoryBranch(input *types.UpsertInventoryBranchInput) (*types.Muta
 				log.Printf("err Create: %+v", err)
 			} else {
 				reponsePass := types.MutationInventoryBranchResponse{
-					Status: common.StatusResponse(200, "OK"),
+					Status: common.StatusResponse(1000, "OK"),
 					Data: &types.ResponseID{
 						ID: &inventoryBranchData.ID,
 					},
@@ -80,7 +80,7 @@ func UpsertInventoryBranch(input *types.UpsertInventoryBranchInput) (*types.Muta
 	log.Printf("inventoryBranchData: %+v", inventoryBranchData)
 
 	reponsePass := types.MutationInventoryBranchResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: common.StatusResponse(1000, "OK"),
 		Data: &types.ResponseID{
 			ID: &inventoryBranchData.ID,
 		},
@@ -120,7 +120,7 @@ func DeleteInventoryBranch(id string) (*types.MutationInventoryBranchResponse, e
 	}
 
 	reponseSuccess := types.MutationInventoryBranchResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: common.StatusResponse(1000, "OK"),
 		Data:   nil,
 	}
 	return &reponseSuccess, nil
@@ -156,7 +156,7 @@ func GetInventoryBranchs(params *types.ParamsInventoryBranch) (*types.InventoryB
 	}
 
 	reponsePass := types.InventoryBranchsDataResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: common.StatusResponse(1000, "OK"),
 		Data:   inventoryBranchsData,
 	}
 

@@ -41,14 +41,13 @@ func (r *queryResolver) GetInventoryType(ctx context.Context, id *string) (*type
 	logctx := helper.LogContext(ClassName, "DeleteInventoryType")
 	logctx.Logger([]interface{}{}, "")
 	// panic(fmt.Errorf("not implemented: GetInventoryTypes - getInventoryTypes"))
-
 	return inventoryService.GetInventoryType(id)
 }
 
 // GetInventoryTypes is the resolver for the getInventoryTypes field.
 func (r *queryResolver) GetInventoryTypes(ctx context.Context, params *types.ParamsInventoryType) (*types.InventoryTypesResponse, error) {
-	logctx := helper.LogContext(ClassName, "DeleteInventoryType")
-	logctx.Logger([]interface{}{}, "")
+	logctx := helper.LogContext(ClassName, "GetInventoryTypes")
+	logctx.Logger([]interface{}{params}, "param")
 
 	return inventoryService.GetInventoryTypes(params)
 	// panic(fmt.Errorf("not implemented: GetInventoryTypes - getInventoryTypes"))

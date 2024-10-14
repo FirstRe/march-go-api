@@ -21,7 +21,7 @@ var jwtSecret = []byte(getJwtSecret())
 func getJwtSecret() string {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		return "aSecret"
+		return "secret_MAKMAK"
 	}
 	return secret
 }
@@ -60,7 +60,10 @@ func VerifyJWT(tokens string) (*JwtCustomClaim, error) {
 		return nil, err
 	}
 	claims, _ := token.Claims.(jwt.MapClaims)
-	// log.Printf("clams:%v", claims)
+	// log.Printf("clams:%+v", claims)
+
+	// helper.LogJson(claims, "claims")
+	// Log the pretty-printed JSON string
 
 	shopsId, _ := claims["shopsId"].(string)
 	// log.Printf("clams:%v", shopsId)

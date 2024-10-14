@@ -59,7 +59,7 @@ func UpsertInventoryBrand(input *types.UpsertInventoryBrandInput) (*types.Mutati
 				log.Printf("err Create: %+v", err)
 			} else {
 				reponsePass := types.MutationInventoryBrandResponse{
-					Status: common.StatusResponse(200, "OK"),
+					Status: common.StatusResponse(1000, "OK"),
 					Data: &types.ResponseID{
 						ID: &inventoryBrandData.ID,
 					},
@@ -80,7 +80,7 @@ func UpsertInventoryBrand(input *types.UpsertInventoryBrandInput) (*types.Mutati
 	log.Printf("inventoryBrandData: %+v", inventoryBrandData)
 
 	reponsePass := types.MutationInventoryBrandResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: common.StatusResponse(1000, "OK"),
 		Data: &types.ResponseID{
 			ID: &inventoryBrandData.ID,
 		},
@@ -120,7 +120,7 @@ func DeleteInventoryBrand(id string) (*types.MutationInventoryBrandResponse, err
 	}
 
 	reponseSuccess := types.MutationInventoryBrandResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: common.StatusResponse(1000, "OK"),
 		Data:   nil,
 	}
 	return &reponseSuccess, nil
@@ -156,7 +156,7 @@ func GetInventoryBrands(params *types.ParamsInventoryBrand) (*types.InventoryBra
 	}
 
 	reponsePass := types.InventoryBrandsDataResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: common.StatusResponse(1000, "OK"),
 		Data:   inventoryBrandsData,
 	}
 
