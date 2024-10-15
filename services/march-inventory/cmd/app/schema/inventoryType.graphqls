@@ -51,5 +51,6 @@ extend type Mutation {
 
 extend type Query {
   getInventoryType(id: String): InventoryTypeResponse @auth
-  getInventoryTypes(params: ParamsInventoryType): InventoryTypesResponse @auth
+  getInventoryTypes(params: ParamsInventoryType): InventoryTypesResponse
+    @auth(scopes: ["MakerAdminScope"])
 }

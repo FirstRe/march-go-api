@@ -43,7 +43,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	Auth func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	Auth func(ctx context.Context, obj interface{}, next graphql.Resolver, scopes []*string) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -1392,7 +1392,7 @@ var sources = []*ast.Source{
 ) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 # new directive
-directive @auth on FIELD_DEFINITION
+directive @auth(scopes: [String]) on FIELD_DEFINITION
 
 scalar DateTime
 
@@ -1749,7 +1749,8 @@ extend type Mutation {
 
 extend type Query {
   getInventoryType(id: String): InventoryTypeResponse @auth
-  getInventoryTypes(params: ParamsInventoryType): InventoryTypesResponse @auth
+  getInventoryTypes(params: ParamsInventoryType): InventoryTypesResponse
+    @auth(scopes: ["MakerAdminScope"])
 }
 `, BuiltIn: false},
 }
@@ -1758,6 +1759,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) dir_auth_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []*string
+	if tmp, ok := rawArgs["scopes"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scopes"))
+		arg0, err = ec.unmarshalOString2ᚕᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["scopes"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_deleteInventoryBranch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -6193,7 +6209,7 @@ func (ec *executionContext) _Mutation_upsertInventoryType(ctx context.Context, f
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0)
+			return ec.directives.Auth(ctx, nil, directive0, nil)
 		}
 
 		tmp, err := directive1(rctx)
@@ -6271,7 +6287,7 @@ func (ec *executionContext) _Mutation_deleteInventoryType(ctx context.Context, f
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0)
+			return ec.directives.Auth(ctx, nil, directive0, nil)
 		}
 
 		tmp, err := directive1(rctx)
@@ -6890,7 +6906,7 @@ func (ec *executionContext) _Query_getInventory(ctx context.Context, field graph
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0)
+			return ec.directives.Auth(ctx, nil, directive0, nil)
 		}
 
 		tmp, err := directive1(rctx)
@@ -7131,7 +7147,7 @@ func (ec *executionContext) _Query_getInventoryType(ctx context.Context, field g
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0)
+			return ec.directives.Auth(ctx, nil, directive0, nil)
 		}
 
 		tmp, err := directive1(rctx)
@@ -7206,10 +7222,14 @@ func (ec *executionContext) _Query_getInventoryTypes(ctx context.Context, field 
 			return ec.resolvers.Query().GetInventoryTypes(rctx, fc.Args["params"].(*types.ParamsInventoryType))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"MakerAdminScope"})
+			if err != nil {
+				return nil, err
+			}
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0)
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
 		}
 
 		tmp, err := directive1(rctx)

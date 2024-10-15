@@ -4,7 +4,7 @@ directive @goField(
 ) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 # new directive
-directive @auth on FIELD_DEFINITION
+directive @auth(scopes: [String]) on FIELD_DEFINITION
 
 scalar DateTime
 

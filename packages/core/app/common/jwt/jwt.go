@@ -2,6 +2,8 @@ package jwt
 
 import (
 	"context"
+	"core/app/helper"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -11,8 +13,18 @@ import (
 
 type authString string
 
+type Info struct {
+	Tasks []string `json:"tasks"`
+}
+
 type JwtCustomClaim struct {
-	ShopsID string `json:"shopsId"`
+	ShopsID  string `json:"shopsId"`
+	Role     string `json:"role"`
+	UserId   string `json:"userId"`
+	DeviceId string `json:"deviceId"`
+	ShopName string `json:"shopName"`
+	UserName string `json:"userName"`
+	Info     Info   `json:"info"`
 	jwt.StandardClaims
 }
 
@@ -53,23 +65,45 @@ func JwtValidate(ctx context.Context, token string) (*jwt.Token, error) {
 }
 
 func VerifyJWT(tokens string) (*JwtCustomClaim, error) {
-	// claims := &JwtCustomClaim{}
+	logctx := helper.LogContext("JWT", "VerifyJWT")
 
 	token, err := jwt.Parse(tokens, nil)
+
 	if token == nil {
 		return nil, err
 	}
-	claims, _ := token.Claims.(jwt.MapClaims)
-	// log.Printf("clams:%+v", claims)
 
-	// helper.LogJson(claims, "claims")
-	// Log the pretty-printed JSON string
+	claims, _ := token.Claims.(jwt.MapClaims)
+	logctx.Logger(claims, "claims")
 
 	shopsId, _ := claims["shopsId"].(string)
-	// log.Printf("clams:%v", shopsId)
+	role, _ := claims["role"].(string)
+	userId, _ := claims["userId"].(string)
+	deviceId, _ := claims["deviceId"].(string)
+	shopName, _ := claims["shopName"].(string)
+	userName, _ := claims["userName"].(string)
+	infoMap, _ := claims["info"].(map[string]interface{})
+
+	infoJson, err := json.Marshal(infoMap)
+	if err != nil {
+		return nil, err
+	}
+
+	var info Info
+	err = json.Unmarshal(infoJson, &info)
+
+	if err != nil {
+		return nil, err
+	}
 
 	userInfo := JwtCustomClaim{
-		ShopsID: shopsId,
+		ShopsID:  shopsId,
+		Role:     role,
+		UserId:   userId,
+		Info:     info,
+		DeviceId: deviceId,
+		ShopName: shopName,
+		UserName: userName,
 	}
 
 	return &userInfo, nil

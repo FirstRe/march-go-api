@@ -2,30 +2,43 @@ package main
 
 import (
 	// "fmt"
-	auth "core/app/auth"
+
+	"core/app/auth"
 	"core/app/middlewares"
 	"log"
-	gormDb "march-auth/cmd/app/common/gorm"
-	graph "march-auth/cmd/app/graph/generated"
-	"march-auth/cmd/app/graph/model"
-	"march-auth/cmd/app/resolvers"
-	"net/http"
+	"march-auth/cmd/app/services/uam"
+	gormDb "march-inventory/cmd/app/common/gorm"
+	graph "march-inventory/cmd/app/graph/generated"
+	"march-inventory/cmd/app/graph/model"
+	"march-inventory/cmd/app/resolvers"
 	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/gorilla/mux"
-	"gorm.io/gorm"
-	// "github.com/jinzhu/gorm"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
+	// CORS package
 )
 
 const defaultPort = "8080"
 
-// Middleware function to extract and store the header value in the context
-type Product struct {
-	gorm.Model
-	Code  string
-	Price uint
+func graphqlHandler() gin.HandlerFunc {
+	c := graph.Config{Resolvers: &resolvers.Resolver{}}
+	c.Directives.Auth = auth.Auth
+	h := handler.NewDefaultServer(graph.NewExecutableSchema(c))
+
+	return func(c *gin.Context) {
+		h.ServeHTTP(c.Writer, c.Request)
+	}
+}
+
+func playgroundHandler() gin.HandlerFunc {
+	h := playground.Handler("GraphQL", "/graphql")
+
+	return func(c *gin.Context) {
+		h.ServeHTTP(c.Writer, c.Request)
+	}
 }
 
 func main() {
@@ -39,27 +52,25 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
-	db.AutoMigrate(&model.Post{}, &model.User{})
+	db.AutoMigrate(&model.Inventory{}, &model.InventoryBranch{}, &model.InventoryBrand{}, &model.InventoryFile{}, &model.InventoryType{})
 
-	// db.Session(&gorm.Session{SkipHooks: false}).Create(&basedb.UserRe{})
-	// db.AutoMigrate(&basedb.UserRe{})
-	//_, err := config.InitDb()
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+	r := gin.Default()
 
-	router := mux.NewRouter()
-	router.Use(middlewares.AuthMiddleware)
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"*"},
+		AllowCredentials: true,
+	}))
 
-	c := graph.Config{Resolvers: &resolvers.Resolver{}}
-	c.Directives.Auth = auth.Auth
-
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(c))
-
-	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query", srv)
+	r.Use(middlewares.AuthMiddleware())
+	r.POST("/diviceId", uam.DiviceId)
+	r.POST("/graphql", graphqlHandler())
+	r.GET("/graphql/playground", playgroundHandler())
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe("localhost:"+port, router))
+	log.Fatal(r.Run("localhost:" + port))
+
 }

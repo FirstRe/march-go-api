@@ -27,19 +27,13 @@ type GraphQLRequest struct {
 	Variables     map[string]interface{} `json:"variables"`
 }
 
-type ErrorResponse struct {
-	message string      `json:"message"`
-	code    string      `json:"code"`
-	Data    interface{} `json:"data,omitempty"`
-}
-
 func AuthString(key string) string {
 	return "auth_" + key
 }
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var gqlErr *gqlerror.Error
+		var gqlErr []gqlerror.Error
 		auth := c.GetHeader("Authorization")
 		lang := c.GetHeader("lang")
 
@@ -52,23 +46,17 @@ func AuthMiddleware() gin.HandlerFunc {
 		if len(auth) > len(bearer) && auth[:len(bearer)] == bearer {
 			auth = auth[len(bearer):] // Strip the "Bearer " prefix
 		} else {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token"})
-			c.Abort()
-			return
+			gqlErr = append(gqlErr, *gqlerror.Errorf("Unauthorized"))
 		}
 
 		validate, err := jwt.JwtValidate(context.Background(), auth)
 		if err != nil || !validate.Valid {
-			gqlErr = gqlerror.Errorf("Invalid Token or Authentication Failed")
-
+			gqlErr = append(gqlErr, *gqlerror.Errorf("Unauthorized"))
 		}
 
 		userInfo, err := jwt.VerifyJWT(auth)
 		if err != nil {
-			log.Printf("err: %v", err)
-			c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token3"})
-			c.Abort()
-			return
+			gqlErr = append(gqlErr, *gqlerror.Errorf("Unauthorized"))
 		}
 
 		var req GraphQLRequest
@@ -76,11 +64,8 @@ func AuthMiddleware() gin.HandlerFunc {
 		if c.Request.Method == http.MethodPost && c.GetHeader("Content-Type") == "application/json" {
 			body, _ := io.ReadAll(c.Request.Body)
 			c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
-
 			_ = json.Unmarshal(body, &req)
-
 		}
-
 		ctx := context.WithValue(c.Request.Context(), AuthString("auth"), auth)
 		ctx = context.WithValue(ctx, AuthString("userInfo"), userInfo)
 		ctx = context.WithValue(ctx, AuthString("lang"), lang)
@@ -100,7 +85,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 func CtxValue(ctx context.Context) string {
 	raw, _ := ctx.Value(AuthString("auth")).(string)
-	
+
 	return raw
 }
 
