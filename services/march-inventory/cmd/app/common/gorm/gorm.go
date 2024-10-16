@@ -3,6 +3,7 @@ package gormDb
 import (
 	"march-inventory/cmd/app/graph/model"
 
+	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -12,7 +13,7 @@ var InventoryType *gorm.DB
 var InventoryBrand *gorm.DB
 
 func Initialize() (*gorm.DB, error) {
-	dsn := "root:123456@tcp(0.0.0.0:3306)/march_inventory_test?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := viper.GetString("DATABASE_URL")
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		PrepareStmt:            true,
 		SkipDefaultTransaction: true,

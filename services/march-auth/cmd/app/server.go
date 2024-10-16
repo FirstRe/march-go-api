@@ -1,32 +1,50 @@
 package main
 
 import (
-	// "fmt"
-
+	"context"
 	"core/app/auth"
 	"core/app/middlewares"
 	"log"
+	gormDb "march-auth/cmd/app/common/gorm"
+	graph "march-auth/cmd/app/graph/generated"
+	"march-auth/cmd/app/graph/model"
+	"march-auth/cmd/app/resolvers"
 	"march-auth/cmd/app/services/uam"
-	gormDb "march-inventory/cmd/app/common/gorm"
-	graph "march-inventory/cmd/app/graph/generated"
-	"march-inventory/cmd/app/graph/model"
-	"march-inventory/cmd/app/resolvers"
-	"os"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
-	// CORS package
+	"github.com/spf13/viper"
 )
 
 const defaultPort = "8080"
 
+func initConfig() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+	viper.SetConfigFile(".env")
+	viper.AutomaticEnv()
+}
+
 func graphqlHandler() gin.HandlerFunc {
 	c := graph.Config{Resolvers: &resolvers.Resolver{}}
 	c.Directives.Auth = auth.Auth
+	introspection := viper.GetBool("GRAPHQL_INTROSPECTION")
+
 	h := handler.NewDefaultServer(graph.NewExecutableSchema(c))
+	h.AroundOperations(func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
+		if !introspection {
+			graphql.GetOperationContext(ctx).DisableIntrospection = true
+		}
+
+		return next(ctx)
+	})
 
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
@@ -43,7 +61,8 @@ func playgroundHandler() gin.HandlerFunc {
 
 func main() {
 
-	port := os.Getenv("PORT")
+	initConfig()
+	port := viper.GetString("PORT")
 	if port == "" {
 		port = defaultPort
 	}
@@ -54,7 +73,7 @@ func main() {
 	}
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
-	db.AutoMigrate(&model.Inventory{}, &model.InventoryBranch{}, &model.InventoryBrand{}, &model.InventoryFile{}, &model.InventoryType{})
+	db.AutoMigrate(&model.Post{}, &model.User{})
 
 	r := gin.Default()
 

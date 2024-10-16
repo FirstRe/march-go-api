@@ -12,6 +12,7 @@ import (
 	// "log"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/spf13/viper"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
@@ -80,8 +81,8 @@ func validateDeviceId(
 	accessToken string,
 	userTask []string,
 	scopes []*string) (bool, string) {
-
-	deviceId, err := deviceIdCheckPost("http://0.0.0.0:8080/diviceId", accessToken)
+	url := viper.GetString("UAM_URL")
+	deviceId, err := deviceIdCheckPost(url, accessToken)
 
 	if err != nil {
 		return false, "Unauthorized Device"

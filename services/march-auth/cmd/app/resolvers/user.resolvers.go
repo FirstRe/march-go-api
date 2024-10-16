@@ -7,7 +7,6 @@ package resolvers
 import (
 	"context"
 	"fmt"
-
 	"march-auth/cmd/app/common"
 	"march-auth/cmd/app/common/helper"
 	graph "march-auth/cmd/app/graph/generated"

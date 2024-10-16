@@ -43,7 +43,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	Auth func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	Auth func(ctx context.Context, obj interface{}, next graphql.Resolver, scopes []*string) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -411,7 +411,7 @@ var sources = []*ast.Source{
 ) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 # new directive
-directive @auth on FIELD_DEFINITION
+directive @auth(scopes: [String]) on FIELD_DEFINITION
 
 scalar DateTime
 
@@ -483,13 +483,28 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) dir_auth_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []*string
+	if tmp, ok := rawArgs["scopes"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scopes"))
+		arg0, err = ec.unmarshalOString2ᚕᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["scopes"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 types.UserInputParams
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUserInputParams2goᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐUserInputParams(ctx, tmp)
+		arg0, err = ec.unmarshalNUserInputParams2marchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐUserInputParams(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -504,7 +519,7 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 	var arg0 types.LoginInputParams
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNLoginInputParams2goᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐLoginInputParams(ctx, tmp)
+		arg0, err = ec.unmarshalNLoginInputParams2marchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐLoginInputParams(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -591,7 +606,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*types.ResponseCreateUser)
 	fc.Result = res
-	return ec.marshalOResponseCreateUser2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐResponseCreateUser(ctx, field.Selections, res)
+	return ec.marshalOResponseCreateUser2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐResponseCreateUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -649,7 +664,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*types.ResponseLogin)
 	fc.Result = res
-	return ec.marshalOResponseLogin2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐResponseLogin(ctx, field.Selections, res)
+	return ec.marshalOResponseLogin2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐResponseLogin(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -751,7 +766,7 @@ func (ec *executionContext) _Query_getUsers(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*types.ResponseGetUser)
 	fc.Result = res
-	return ec.marshalOResponseGetUser2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐResponseGetUser(ctx, field.Selections, res)
+	return ec.marshalOResponseGetUser2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐResponseGetUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -794,7 +809,7 @@ func (ec *executionContext) _Query_test(ctx context.Context, field graphql.Colle
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0)
+			return ec.directives.Auth(ctx, nil, directive0, nil)
 		}
 
 		tmp, err := directive1(rctx)
@@ -807,7 +822,7 @@ func (ec *executionContext) _Query_test(ctx context.Context, field graphql.Colle
 		if data, ok := tmp.(*types.Status); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/firstre/cmd/app/graph/types.Status`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-auth/cmd/app/graph/types.Status`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -818,7 +833,7 @@ func (ec *executionContext) _Query_test(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*types.Status)
 	fc.Result = res
-	return ec.marshalOStatus2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐStatus(ctx, field.Selections, res)
+	return ec.marshalOStatus2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_test(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -865,7 +880,7 @@ func (ec *executionContext) _Query_getPrice(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*types.Price)
 	fc.Result = res
-	return ec.marshalOPrice2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐPrice(ctx, field.Selections, res)
+	return ec.marshalOPrice2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐPrice(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getPrice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1039,7 +1054,7 @@ func (ec *executionContext) _ResponseCreateUser_data(ctx context.Context, field 
 	}
 	res := resTmp.(*types.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ResponseCreateUser_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1092,7 +1107,7 @@ func (ec *executionContext) _ResponseCreateUser_status(ctx context.Context, fiel
 	}
 	res := resTmp.(*types.Status)
 	fc.Result = res
-	return ec.marshalOStatus2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐStatus(ctx, field.Selections, res)
+	return ec.marshalOStatus2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ResponseCreateUser_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1139,7 +1154,7 @@ func (ec *executionContext) _ResponseGetUser_data(ctx context.Context, field gra
 	}
 	res := resTmp.([]*types.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ResponseGetUser_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1192,7 +1207,7 @@ func (ec *executionContext) _ResponseGetUser_status(ctx context.Context, field g
 	}
 	res := resTmp.(*types.Status)
 	fc.Result = res
-	return ec.marshalOStatus2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐStatus(ctx, field.Selections, res)
+	return ec.marshalOStatus2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ResponseGetUser_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1239,7 +1254,7 @@ func (ec *executionContext) _ResponseLogin_data(ctx context.Context, field graph
 	}
 	res := resTmp.(*types.Token)
 	fc.Result = res
-	return ec.marshalOToken2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐToken(ctx, field.Selections, res)
+	return ec.marshalOToken2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐToken(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ResponseLogin_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1290,7 +1305,7 @@ func (ec *executionContext) _ResponseLogin_status(ctx context.Context, field gra
 	}
 	res := resTmp.(*types.Status)
 	fc.Result = res
-	return ec.marshalOStatus2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐStatus(ctx, field.Selections, res)
+	return ec.marshalOStatus2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ResponseLogin_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4460,7 +4475,7 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNLoginInputParams2goᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐLoginInputParams(ctx context.Context, v interface{}) (types.LoginInputParams, error) {
+func (ec *executionContext) unmarshalNLoginInputParams2marchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐLoginInputParams(ctx context.Context, v interface{}) (types.LoginInputParams, error) {
 	res, err := ec.unmarshalInputLoginInputParams(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -4480,7 +4495,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNUserInputParams2goᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐUserInputParams(ctx context.Context, v interface{}) (types.UserInputParams, error) {
+func (ec *executionContext) unmarshalNUserInputParams2marchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐUserInputParams(ctx context.Context, v interface{}) (types.UserInputParams, error) {
 	res, err := ec.unmarshalInputUserInputParams(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -4780,39 +4795,71 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) marshalOPrice2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐPrice(ctx context.Context, sel ast.SelectionSet, v *types.Price) graphql.Marshaler {
+func (ec *executionContext) marshalOPrice2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐPrice(ctx context.Context, sel ast.SelectionSet, v *types.Price) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Price(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOResponseCreateUser2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐResponseCreateUser(ctx context.Context, sel ast.SelectionSet, v *types.ResponseCreateUser) graphql.Marshaler {
+func (ec *executionContext) marshalOResponseCreateUser2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐResponseCreateUser(ctx context.Context, sel ast.SelectionSet, v *types.ResponseCreateUser) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ResponseCreateUser(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOResponseGetUser2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐResponseGetUser(ctx context.Context, sel ast.SelectionSet, v *types.ResponseGetUser) graphql.Marshaler {
+func (ec *executionContext) marshalOResponseGetUser2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐResponseGetUser(ctx context.Context, sel ast.SelectionSet, v *types.ResponseGetUser) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ResponseGetUser(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOResponseLogin2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐResponseLogin(ctx context.Context, sel ast.SelectionSet, v *types.ResponseLogin) graphql.Marshaler {
+func (ec *executionContext) marshalOResponseLogin2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐResponseLogin(ctx context.Context, sel ast.SelectionSet, v *types.ResponseLogin) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ResponseLogin(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOStatus2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐStatus(ctx context.Context, sel ast.SelectionSet, v *types.Status) graphql.Marshaler {
+func (ec *executionContext) marshalOStatus2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐStatus(ctx context.Context, sel ast.SelectionSet, v *types.Status) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Status(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOString2ᚕᚖstring(ctx context.Context, v interface{}) ([]*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalOString2ᚖstring(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOString2ᚕᚖstring(ctx context.Context, sel ast.SelectionSet, v []*string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalOString2ᚖstring(ctx, sel, v[i])
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
@@ -4831,14 +4878,14 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOToken2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐToken(ctx context.Context, sel ast.SelectionSet, v *types.Token) graphql.Marshaler {
+func (ec *executionContext) marshalOToken2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐToken(ctx context.Context, sel ast.SelectionSet, v *types.Token) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Token(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUser2ᚕᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐUser(ctx context.Context, sel ast.SelectionSet, v []*types.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚕᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐUser(ctx context.Context, sel ast.SelectionSet, v []*types.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -4865,7 +4912,7 @@ func (ec *executionContext) marshalOUser2ᚕᚖgoᚑgraphqlᚋcmdᚋappᚋgraph�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4879,7 +4926,7 @@ func (ec *executionContext) marshalOUser2ᚕᚖgoᚑgraphqlᚋcmdᚋappᚋgraph�
 	return ret
 }
 
-func (ec *executionContext) marshalOUser2ᚖgoᚑgraphqlᚋcmdᚋappᚋgraphᚋtypesᚐUser(ctx context.Context, sel ast.SelectionSet, v *types.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐUser(ctx context.Context, sel ast.SelectionSet, v *types.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -17,7 +17,7 @@
 .vscode
 __debug_bin*
 
-.env*
+# .env*
 *.log
 
 *.exe
