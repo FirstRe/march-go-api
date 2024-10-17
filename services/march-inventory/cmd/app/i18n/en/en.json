@@ -1,0 +1,47 @@
+{
+  "BadRequest": {
+    "name": "Field name is requried"
+  },
+  "onUse": {
+    "branch": "Inventory Management|This Branch already use in product",
+    "brand": "Inventory Management|This Brand already use in product",
+    "type": "Inventory Management|This Type already use in product"
+  },
+  "Success": {
+    "branch": "Inventory Management|Delete Branch Success",
+    "brand": "Inventory Management|Delete Brand Success",
+    "type": "Inventory Management|Delete Type Success",
+    "inventory": "Inventory Management|Delete Inventory Success",
+    "trash": {
+      "recovery": "Trash|Restore Success",
+      "delete": "Trash|Delete Success"
+    }
+  },
+  "Upload": {
+    "success": "Upload CSV|Upload Success",
+    "duplicated": "Upload CSV|Duplicated Filename. Upload again.",
+    "lost": "Upload CSV|Maybe some item lost or duplicated. Please upload csv again.",
+    "somethingWrong": "Upload CSV|Upload Failed. Upload again."
+  },
+  "Upsert": {
+    "success": {
+      "create": {
+        "branch": "Inventory Management|Create Branch Success",
+        "brand": "Inventory Management|Create Brand Success",
+        "type": "Inventory Management|Create Type Success",
+        "inventory": "Inventory Management|Create Inventory Success"
+      },
+      "update": {
+        "branch": "Inventory Management|Update Branch Success",
+        "brand": "Inventory Management|Update Brand Success",
+        "type": "Inventory Management|Update Type Success",
+        "inventory": "Inventory Management|Update Inventory Success"
+      }
+    },
+    "duplicated": "Inventory Management|Duplicated Name"
+  },
+  "favorite": {
+    "add": "Inventory Management|Add Favorite",
+    "delete": "Inventory Management|Remove Favorite"
+  }
+}

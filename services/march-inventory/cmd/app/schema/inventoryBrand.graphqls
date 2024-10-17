@@ -38,13 +38,15 @@ input ParamsInventoryBrand {
 }
 
 type Query {
-  getInventoryBrand(id: String): InventoryBrand
+  getInventoryBrand(id: String): InventoryBrand @auth(scopes: ["AnyAdminScope"])
   getInventoryBrands(params: ParamsInventoryBrand): InventoryBrandsDataResponse
+    @auth(scopes: ["AnyAdminScope"])
 }
 
 type Mutation {
   upsertInventoryBrand(
     input: UpsertInventoryBrandInput!
-  ): MutationInventoryBrandResponse
+  ): MutationInventoryBrandResponse @auth(scopes: ["INBrandMaker"])
   deleteInventoryBrand(id: String!): MutationInventoryBrandResponse
+    @auth(scopes: ["INBrandMaker"])
 }

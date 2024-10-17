@@ -40,12 +40,13 @@ input ParamsInventoryBranch {
 extend type Query {
   getInventoryBranchs(
     params: ParamsInventoryBranch
-  ): InventoryBranchsDataResponse
+  ): InventoryBranchsDataResponse @auth(scopes: ["AnyAdminScope"])
 }
 
 extend type Mutation {
   upsertInventoryBranch(
     input: UpsertInventoryBranchInput!
-  ): MutationInventoryBranchResponse
+  ): MutationInventoryBranchResponse @auth(scopes: ["INBranchMaker"])
   deleteInventoryBranch(id: String!): MutationInventoryBranchResponse
+    @auth(scopes: ["INBranchMaker"])
 }

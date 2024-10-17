@@ -6,6 +6,12 @@ type InventoryType {
   updatedBy: String
   updatedAt: String!
   createdAt: String!
+  posts: [Post!]!
+}
+
+type Post {
+  id: String
+  name: String
 }
 
 type InventoryTypeResponse {
@@ -45,12 +51,14 @@ input ParamsInventoryType {
 extend type Mutation {
   upsertInventoryType(
     input: UpsertInventoryTypeInput!
-  ): MutationInventoryResponse @auth
-  deleteInventoryType(id: String!): MutationInventoryResponse @auth
+  ): MutationInventoryResponse @auth(scopes: ["INTypeMaker"])
+  deleteInventoryType(id: String!): MutationInventoryResponse
+    @auth(scopes: ["INTypeMaker"])
 }
 
 extend type Query {
-  getInventoryType(id: String): InventoryTypeResponse @auth
+  getInventoryType(id: String): InventoryTypeResponse
+    @auth(scopes: ["AnyAdminScope"])
   getInventoryTypes(params: ParamsInventoryType): InventoryTypesResponse
-    @auth(scopes: ["MakerAdminScope"])
+    @auth(scopes: ["AnyAdminScope"])
 }

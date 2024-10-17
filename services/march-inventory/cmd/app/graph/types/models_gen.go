@@ -131,6 +131,7 @@ type InventoryType struct {
 	UpdatedBy   *string `json:"updatedBy,omitempty"`
 	UpdatedAt   string  `json:"updatedAt"`
 	CreatedAt   string  `json:"createdAt"`
+	Posts       []*Post `json:"posts"`
 }
 
 type InventoryTypeResponse struct {
@@ -192,6 +193,11 @@ type ParamsInventoryType struct {
 	Search *string `json:"search,omitempty"`
 	Offset *int    `json:"offset,omitempty"`
 	Limit  *int    `json:"limit,omitempty"`
+}
+
+type Post struct {
+	ID   *string `json:"id,omitempty"`
+	Name *string `json:"name,omitempty"`
 }
 
 type Query struct {

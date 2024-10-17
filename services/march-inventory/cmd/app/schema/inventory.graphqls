@@ -189,18 +189,25 @@ type InventoryNameResponse {
 }
 
 extend type Query {
-  getInventoryNames: InventoryNameResponse
-  getInventory(id: String): InventoryDataResponse @auth
+  getInventoryNames: InventoryNameResponse @auth(scopes: ["AnyAdminScope"])
+  getInventory(id: String): InventoryDataResponse
+    @auth(scopes: ["AnyAdminScope"])
   getInventories(params: ParamsInventory): InventoriesResponse
+    @auth(scopes: ["AnyAdminScope"])
   getInventoryAllDeleted: DeletedInventoryResponse
+    @auth(scopes: ["AnyAdminScope"])
 }
 
 extend type Mutation {
   uploadInventory(input: UploadInventoryInput!): UploadInventoryResponse
+    @auth(scopes: ["INCSV"])
   upsertInventory(input: UpsertInventoryInput!): MutationInventoryResponse
+    @auth(scopes: ["INMaker"])
   deleteInventory(id: String!): MutationInventoryResponse
+    @auth(scopes: ["INMaker"])
   favoriteInventory(id: String!): MutationInventoryResponse
+    @auth(scopes: ["INMaker"])
   recoveryHardDeleted(
     input: RecoveryHardDeletedInput!
-  ): RecoveryHardDeletedResponse
+  ): RecoveryHardDeletedResponse @auth(scopes: ["INTrashMaker"])
 }

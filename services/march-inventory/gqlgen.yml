@@ -25,6 +25,10 @@ resolver:
 
 # your liking
 models:
+  InventoryType:
+    fields:
+      posts:
+        resolver: true
   ID:
     model:
       - github.com/99designs/gqlgen/graphql.ID

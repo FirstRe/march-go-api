@@ -38,6 +38,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	InventoryType() InventoryTypeResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 }
@@ -168,6 +169,7 @@ type ComplexityRoot struct {
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
+		Posts       func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 		UpdatedBy   func(childComplexity int) int
 	}
@@ -214,6 +216,11 @@ type ComplexityRoot struct {
 	MutationInventoryTypeResponse struct {
 		Data   func(childComplexity int) int
 		Status func(childComplexity int) int
+	}
+
+	Post struct {
+		ID   func(childComplexity int) int
+		Name func(childComplexity int) int
 	}
 
 	Query struct {
@@ -268,6 +275,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type InventoryTypeResolver interface {
+	Posts(ctx context.Context, obj *types.InventoryType) ([]*types.Post, error)
+}
 type MutationResolver interface {
 	UpsertInventoryBrand(ctx context.Context, input types.UpsertInventoryBrandInput) (*types.MutationInventoryBrandResponse, error)
 	DeleteInventoryBrand(ctx context.Context, id string) (*types.MutationInventoryBrandResponse, error)
@@ -816,6 +826,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.InventoryType.Name(childComplexity), true
 
+	case "InventoryType.posts":
+		if e.complexity.InventoryType.Posts == nil {
+			break
+		}
+
+		return e.complexity.InventoryType.Posts(childComplexity), true
+
 	case "InventoryType.updatedAt":
 		if e.complexity.InventoryType.UpdatedAt == nil {
 			break
@@ -1045,6 +1062,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MutationInventoryTypeResponse.Status(childComplexity), true
+
+	case "Post.id":
+		if e.complexity.Post.ID == nil {
+			break
+		}
+
+		return e.complexity.Post.ID(childComplexity), true
+
+	case "Post.name":
+		if e.complexity.Post.Name == nil {
+			break
+		}
+
+		return e.complexity.Post.Name(childComplexity), true
 
 	case "Query.getInventories":
 		if e.complexity.Query.GetInventories == nil {
@@ -1577,20 +1608,27 @@ type InventoryNameResponse {
 }
 
 extend type Query {
-  getInventoryNames: InventoryNameResponse
-  getInventory(id: String): InventoryDataResponse @auth
+  getInventoryNames: InventoryNameResponse @auth(scopes: ["AnyAdminScope"])
+  getInventory(id: String): InventoryDataResponse
+    @auth(scopes: ["AnyAdminScope"])
   getInventories(params: ParamsInventory): InventoriesResponse
+    @auth(scopes: ["AnyAdminScope"])
   getInventoryAllDeleted: DeletedInventoryResponse
+    @auth(scopes: ["AnyAdminScope"])
 }
 
 extend type Mutation {
   uploadInventory(input: UploadInventoryInput!): UploadInventoryResponse
+    @auth(scopes: ["INCSV"])
   upsertInventory(input: UpsertInventoryInput!): MutationInventoryResponse
+    @auth(scopes: ["INMaker"])
   deleteInventory(id: String!): MutationInventoryResponse
+    @auth(scopes: ["INMaker"])
   favoriteInventory(id: String!): MutationInventoryResponse
+    @auth(scopes: ["INMaker"])
   recoveryHardDeleted(
     input: RecoveryHardDeletedInput!
-  ): RecoveryHardDeletedResponse
+  ): RecoveryHardDeletedResponse @auth(scopes: ["INTrashMaker"])
 }
 `, BuiltIn: false},
 	{Name: "../../schema/inventoryBranch.graphqls", Input: `type InventoryBranch {
@@ -1635,14 +1673,15 @@ input ParamsInventoryBranch {
 extend type Query {
   getInventoryBranchs(
     params: ParamsInventoryBranch
-  ): InventoryBranchsDataResponse
+  ): InventoryBranchsDataResponse @auth(scopes: ["AnyAdminScope"])
 }
 
 extend type Mutation {
   upsertInventoryBranch(
     input: UpsertInventoryBranchInput!
-  ): MutationInventoryBranchResponse
+  ): MutationInventoryBranchResponse @auth(scopes: ["INBranchMaker"])
   deleteInventoryBranch(id: String!): MutationInventoryBranchResponse
+    @auth(scopes: ["INBranchMaker"])
 }
 `, BuiltIn: false},
 	{Name: "../../schema/inventoryBrand.graphqls", Input: `type InventoryBrand {
@@ -1685,15 +1724,17 @@ input ParamsInventoryBrand {
 }
 
 type Query {
-  getInventoryBrand(id: String): InventoryBrand
+  getInventoryBrand(id: String): InventoryBrand @auth(scopes: ["AnyAdminScope"])
   getInventoryBrands(params: ParamsInventoryBrand): InventoryBrandsDataResponse
+    @auth(scopes: ["AnyAdminScope"])
 }
 
 type Mutation {
   upsertInventoryBrand(
     input: UpsertInventoryBrandInput!
-  ): MutationInventoryBrandResponse
+  ): MutationInventoryBrandResponse @auth(scopes: ["INBrandMaker"])
   deleteInventoryBrand(id: String!): MutationInventoryBrandResponse
+    @auth(scopes: ["INBrandMaker"])
 }
 `, BuiltIn: false},
 	{Name: "../../schema/inventoryType.graphqls", Input: `type InventoryType {
@@ -1704,6 +1745,12 @@ type Mutation {
   updatedBy: String
   updatedAt: String!
   createdAt: String!
+  posts: [Post!]!
+}
+
+type Post {
+  id: String
+  name: String
 }
 
 type InventoryTypeResponse {
@@ -1743,14 +1790,16 @@ input ParamsInventoryType {
 extend type Mutation {
   upsertInventoryType(
     input: UpsertInventoryTypeInput!
-  ): MutationInventoryResponse @auth
-  deleteInventoryType(id: String!): MutationInventoryResponse @auth
+  ): MutationInventoryResponse @auth(scopes: ["INTypeMaker"])
+  deleteInventoryType(id: String!): MutationInventoryResponse
+    @auth(scopes: ["INTypeMaker"])
 }
 
 extend type Query {
-  getInventoryType(id: String): InventoryTypeResponse @auth
+  getInventoryType(id: String): InventoryTypeResponse
+    @auth(scopes: ["AnyAdminScope"])
   getInventoryTypes(params: ParamsInventoryType): InventoryTypesResponse
-    @auth(scopes: ["MakerAdminScope"])
+    @auth(scopes: ["AnyAdminScope"])
 }
 `, BuiltIn: false},
 }
@@ -3804,6 +3853,8 @@ func (ec *executionContext) fieldContext_Inventory_inventoryType(ctx context.Con
 				return ec.fieldContext_InventoryType_updatedAt(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_InventoryType_createdAt(ctx, field)
+			case "posts":
+				return ec.fieldContext_InventoryType_posts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type InventoryType", field.Name)
 		},
@@ -5458,6 +5509,56 @@ func (ec *executionContext) fieldContext_InventoryType_createdAt(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _InventoryType_posts(ctx context.Context, field graphql.CollectedField, obj *types.InventoryType) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InventoryType_posts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.InventoryType().Posts(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*types.Post)
+	fc.Result = res
+	return ec.marshalNPost2ᚕᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐPostᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InventoryType_posts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InventoryType",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Post_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Post_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _InventoryTypeResponse_data(ctx context.Context, field graphql.CollectedField, obj *types.InventoryTypeResponse) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_InventoryTypeResponse_data(ctx, field)
 	if err != nil {
@@ -5508,6 +5609,8 @@ func (ec *executionContext) fieldContext_InventoryTypeResponse_data(ctx context.
 				return ec.fieldContext_InventoryType_updatedAt(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_InventoryType_createdAt(ctx, field)
+			case "posts":
+				return ec.fieldContext_InventoryType_posts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type InventoryType", field.Name)
 		},
@@ -5612,6 +5715,8 @@ func (ec *executionContext) fieldContext_InventoryTypesResponse_data(ctx context
 				return ec.fieldContext_InventoryType_updatedAt(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_InventoryType_createdAt(ctx, field)
+			case "posts":
+				return ec.fieldContext_InventoryType_posts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type InventoryType", field.Name)
 		},
@@ -5679,8 +5784,32 @@ func (ec *executionContext) _Mutation_upsertInventoryBrand(ctx context.Context, 
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpsertInventoryBrand(rctx, fc.Args["input"].(types.UpsertInventoryBrandInput))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UpsertInventoryBrand(rctx, fc.Args["input"].(types.UpsertInventoryBrandInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"INBrandMaker"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.MutationInventoryBrandResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.MutationInventoryBrandResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5737,8 +5866,32 @@ func (ec *executionContext) _Mutation_deleteInventoryBrand(ctx context.Context, 
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteInventoryBrand(rctx, fc.Args["id"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteInventoryBrand(rctx, fc.Args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"INBrandMaker"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.MutationInventoryBrandResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.MutationInventoryBrandResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5795,8 +5948,32 @@ func (ec *executionContext) _Mutation_uploadInventory(ctx context.Context, field
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UploadInventory(rctx, fc.Args["input"].(types.UploadInventoryInput))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UploadInventory(rctx, fc.Args["input"].(types.UploadInventoryInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"INCSV"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.UploadInventoryResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.UploadInventoryResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5853,8 +6030,32 @@ func (ec *executionContext) _Mutation_upsertInventory(ctx context.Context, field
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpsertInventory(rctx, fc.Args["input"].(types.UpsertInventoryInput))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UpsertInventory(rctx, fc.Args["input"].(types.UpsertInventoryInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"INMaker"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.MutationInventoryResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.MutationInventoryResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5911,8 +6112,32 @@ func (ec *executionContext) _Mutation_deleteInventory(ctx context.Context, field
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteInventory(rctx, fc.Args["id"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteInventory(rctx, fc.Args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"INMaker"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.MutationInventoryResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.MutationInventoryResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5969,8 +6194,32 @@ func (ec *executionContext) _Mutation_favoriteInventory(ctx context.Context, fie
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FavoriteInventory(rctx, fc.Args["id"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().FavoriteInventory(rctx, fc.Args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"INMaker"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.MutationInventoryResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.MutationInventoryResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6027,8 +6276,32 @@ func (ec *executionContext) _Mutation_recoveryHardDeleted(ctx context.Context, f
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RecoveryHardDeleted(rctx, fc.Args["input"].(types.RecoveryHardDeletedInput))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().RecoveryHardDeleted(rctx, fc.Args["input"].(types.RecoveryHardDeletedInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"INTrashMaker"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.RecoveryHardDeletedResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.RecoveryHardDeletedResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6085,8 +6358,32 @@ func (ec *executionContext) _Mutation_upsertInventoryBranch(ctx context.Context,
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpsertInventoryBranch(rctx, fc.Args["input"].(types.UpsertInventoryBranchInput))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UpsertInventoryBranch(rctx, fc.Args["input"].(types.UpsertInventoryBranchInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"INBranchMaker"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.MutationInventoryBranchResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.MutationInventoryBranchResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6143,8 +6440,32 @@ func (ec *executionContext) _Mutation_deleteInventoryBranch(ctx context.Context,
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteInventoryBranch(rctx, fc.Args["id"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteInventoryBranch(rctx, fc.Args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"INBranchMaker"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.MutationInventoryBranchResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.MutationInventoryBranchResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6206,10 +6527,14 @@ func (ec *executionContext) _Mutation_upsertInventoryType(ctx context.Context, f
 			return ec.resolvers.Mutation().UpsertInventoryType(rctx, fc.Args["input"].(types.UpsertInventoryTypeInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"INTypeMaker"})
+			if err != nil {
+				return nil, err
+			}
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0, nil)
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
 		}
 
 		tmp, err := directive1(rctx)
@@ -6284,10 +6609,14 @@ func (ec *executionContext) _Mutation_deleteInventoryType(ctx context.Context, f
 			return ec.resolvers.Mutation().DeleteInventoryType(rctx, fc.Args["id"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"INTypeMaker"})
+			if err != nil {
+				return nil, err
+			}
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0, nil)
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
 		}
 
 		tmp, err := directive1(rctx)
@@ -6712,6 +7041,88 @@ func (ec *executionContext) fieldContext_MutationInventoryTypeResponse_status(ct
 	return fc, nil
 }
 
+func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *types.Post) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Post_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Post_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Post_name(ctx context.Context, field graphql.CollectedField, obj *types.Post) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Post_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Post_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_getInventoryBrand(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_getInventoryBrand(ctx, field)
 	if err != nil {
@@ -6725,8 +7136,32 @@ func (ec *executionContext) _Query_getInventoryBrand(ctx context.Context, field 
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetInventoryBrand(rctx, fc.Args["id"].(*string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().GetInventoryBrand(rctx, fc.Args["id"].(*string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"AnyAdminScope"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.InventoryBrand); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.InventoryBrand`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6793,8 +7228,32 @@ func (ec *executionContext) _Query_getInventoryBrands(ctx context.Context, field
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetInventoryBrands(rctx, fc.Args["params"].(*types.ParamsInventoryBrand))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().GetInventoryBrands(rctx, fc.Args["params"].(*types.ParamsInventoryBrand))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"AnyAdminScope"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.InventoryBrandsDataResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.InventoryBrandsDataResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6851,8 +7310,32 @@ func (ec *executionContext) _Query_getInventoryNames(ctx context.Context, field 
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetInventoryNames(rctx)
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().GetInventoryNames(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"AnyAdminScope"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.InventoryNameResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.InventoryNameResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6903,10 +7386,14 @@ func (ec *executionContext) _Query_getInventory(ctx context.Context, field graph
 			return ec.resolvers.Query().GetInventory(rctx, fc.Args["id"].(*string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"AnyAdminScope"})
+			if err != nil {
+				return nil, err
+			}
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0, nil)
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
 		}
 
 		tmp, err := directive1(rctx)
@@ -6976,8 +7463,32 @@ func (ec *executionContext) _Query_getInventories(ctx context.Context, field gra
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetInventories(rctx, fc.Args["params"].(*types.ParamsInventory))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().GetInventories(rctx, fc.Args["params"].(*types.ParamsInventory))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"AnyAdminScope"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.InventoriesResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.InventoriesResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7034,8 +7545,32 @@ func (ec *executionContext) _Query_getInventoryAllDeleted(ctx context.Context, f
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetInventoryAllDeleted(rctx)
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().GetInventoryAllDeleted(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"AnyAdminScope"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.DeletedInventoryResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.DeletedInventoryResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7081,8 +7616,32 @@ func (ec *executionContext) _Query_getInventoryBranchs(ctx context.Context, fiel
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetInventoryBranchs(rctx, fc.Args["params"].(*types.ParamsInventoryBranch))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().GetInventoryBranchs(rctx, fc.Args["params"].(*types.ParamsInventoryBranch))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"AnyAdminScope"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.InventoryBranchsDataResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-inventory/cmd/app/graph/types.InventoryBranchsDataResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7144,10 +7703,14 @@ func (ec *executionContext) _Query_getInventoryType(ctx context.Context, field g
 			return ec.resolvers.Query().GetInventoryType(rctx, fc.Args["id"].(*string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"AnyAdminScope"})
+			if err != nil {
+				return nil, err
+			}
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0, nil)
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
 		}
 
 		tmp, err := directive1(rctx)
@@ -7222,7 +7785,7 @@ func (ec *executionContext) _Query_getInventoryTypes(ctx context.Context, field 
 			return ec.resolvers.Query().GetInventoryTypes(rctx, fc.Args["params"].(*types.ParamsInventoryType))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"MakerAdminScope"})
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"AnyAdminScope"})
 			if err != nil {
 				return nil, err
 			}
@@ -11366,13 +11929,49 @@ func (ec *executionContext) _InventoryType(ctx context.Context, sel ast.Selectio
 		case "updatedAt":
 			out.Values[i] = ec._InventoryType_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._InventoryType_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "posts":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._InventoryType_posts(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11687,6 +12286,44 @@ func (ec *executionContext) _MutationInventoryTypeResponse(ctx context.Context, 
 			out.Values[i] = ec._MutationInventoryTypeResponse_data(ctx, field, obj)
 		case "status":
 			out.Values[i] = ec._MutationInventoryTypeResponse_status(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var postImplementors = []string{"Post"}
+
+func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj *types.Post) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, postImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Post")
+		case "id":
+			out.Values[i] = ec._Post_id(ctx, field, obj)
+		case "name":
+			out.Values[i] = ec._Post_name(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12582,6 +13219,60 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNPost2ᚕᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐPostᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Post) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPost2ᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐPost(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNPost2ᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐPost(ctx context.Context, sel ast.SelectionSet, v *types.Post) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Post(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNRecoveryHardDeletedInput2marchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐRecoveryHardDeletedInput(ctx context.Context, v interface{}) (types.RecoveryHardDeletedInput, error) {

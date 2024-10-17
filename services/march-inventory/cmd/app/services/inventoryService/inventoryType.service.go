@@ -2,12 +2,14 @@ package inventoryService
 
 import (
 	"core/app/helper"
+	"core/app/middlewares"
 	"errors"
 	"log"
 	"march-inventory/cmd/app/common"
 	gormDb "march-inventory/cmd/app/common/gorm"
 	"march-inventory/cmd/app/graph/model"
 	"march-inventory/cmd/app/graph/types"
+	translation "march-inventory/cmd/app/i18n"
 
 	"gorm.io/gorm"
 )
@@ -128,9 +130,11 @@ func DeleteInventoryType(id string) (*types.MutationInventoryResponse, error) {
 	return &reponseSuccess, nil
 }
 
-func GetInventoryTypes(params *types.ParamsInventoryType) (*types.InventoryTypesResponse, error) {
+func GetInventoryTypes(params *types.ParamsInventoryType, userInfo middlewares.UserClaims) (*types.InventoryTypesResponse, error) {
 	logctx := helper.LogContext(ClassName, "GetInventoryTypes")
 	logctx.Logger([]interface{}{}, "id")
+	localT := translation.InitLocalizer(userInfo.Lang)
+
 	inventoryTypes := []model.InventoryType{}
 
 	searchParam := ""
@@ -156,9 +160,9 @@ func GetInventoryTypes(params *types.ParamsInventoryType) (*types.InventoryTypes
 			UpdatedAt:   inventoryType.UpdatedAt.String(),
 		}
 	}
-
+	com := translation.LocalizeMessage(localT, "Success.type")
 	reponsePass := types.InventoryTypesResponse{
-		Status: common.StatusResponse(1000, "OK"),
+		Status: common.StatusResponse(1000, com),
 		Data:   inventoryTypesData,
 	}
 

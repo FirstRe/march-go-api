@@ -7,6 +7,7 @@ import (
 	"core/app/middlewares"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	// "log"
@@ -83,7 +84,7 @@ func validateDeviceId(
 	scopes []*string) (bool, string) {
 	url := viper.GetString("UAM_URL")
 	deviceId, err := deviceIdCheckPost(url, accessToken)
-
+	log.Printf("errLog: %+v", err)
 	if err != nil {
 		return false, "Unauthorized Device"
 	}
@@ -91,7 +92,7 @@ func validateDeviceId(
 	isBackOffice := isBackOfficeUser(userTask)
 
 	if deviceIdToken != *deviceId {
-		return false, "Unauthorized Device"
+		return false, "Unauthorized Device2"
 	} else {
 		if isBackOffice {
 			if verifyUser := verifyUserGroups(scopes, userTask); verifyUser {
@@ -116,10 +117,17 @@ func deviceIdCheckPost(url string, accessToken string) (*string, error) {
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
+
 	if err != nil {
 		return nil, fmt.Errorf("Error sending request:", err)
 	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Err api::", resp.StatusCode)
+	}
+
 	defer resp.Body.Close()
+	log.Printf("resp.Body: %+v", resp.StatusCode)
 
 	responseData := &deviceIdPost{}
 
@@ -127,10 +135,6 @@ func deviceIdCheckPost(url string, accessToken string) (*string, error) {
 
 	if derr != nil {
 		return nil, fmt.Errorf("Decode error:", derr)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Err api:", derr)
 	}
 
 	return &responseData.DeviceId, nil

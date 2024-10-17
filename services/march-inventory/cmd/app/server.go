@@ -8,7 +8,9 @@ import (
 	gormDb "march-inventory/cmd/app/common/gorm"
 	graph "march-inventory/cmd/app/graph/generated"
 	"march-inventory/cmd/app/graph/model"
+	translation "march-inventory/cmd/app/i18n"
 	"march-inventory/cmd/app/resolvers"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -64,7 +66,7 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
-
+	translation.InitI18n()
 	db, err := gormDb.Initialize()
 	if err != nil {
 		log.Fatal(err)

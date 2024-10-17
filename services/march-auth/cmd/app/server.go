@@ -85,7 +85,7 @@ func main() {
 	}))
 
 	r.Use(middlewares.AuthMiddleware())
-	r.POST("/diviceId", uam.DiviceId)
+	r.POST("/auth/diviceId", uam.DiviceId)
 	r.POST("/graphql", graphqlHandler())
 	r.GET("/graphql/playground", playgroundHandler())
 

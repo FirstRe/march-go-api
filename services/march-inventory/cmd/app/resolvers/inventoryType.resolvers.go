@@ -8,23 +8,33 @@ import (
 	"context"
 	"core/app/helper"
 	"core/app/middlewares"
+	"log"
+	graph "march-inventory/cmd/app/graph/generated"
 	"march-inventory/cmd/app/graph/types"
 	"march-inventory/cmd/app/services/inventoryService"
 )
+
+// Resolve the posts field in Author
+func (r *inventoryTypeResolver) Posts(ctx context.Context, InventoryType *types.InventoryType) ([]*types.Post, error) {
+	log.Printf("testResolve: %+v", InventoryType.ID)
+
+	id := "1"
+	name := "first"
+	data := []*types.Post{
+		{ID: &id, Name: &name},
+	}
+
+	return data, nil
+}
 
 // UpsertInventoryType is the resolver for the upsertInventoryType field.
 func (r *mutationResolver) UpsertInventoryType(ctx context.Context, input types.UpsertInventoryTypeInput) (*types.MutationInventoryResponse, error) {
 	logctx := helper.LogContext(ClassName, "UpsertInventoryType")
 
 	userInfo := middlewares.UserInfo(ctx)
-
 	logctx.Logger([]interface{}{userInfo}, "userInfo")
 
-	// return nil, nil
-
 	return inventoryService.UpsertInventoryType(&input)
-
-	// panic(fmt.Errorf("not implemented: UpsertInventoryType - upsertInventoryType"))
 }
 
 // DeleteInventoryType is the resolver for the deleteInventoryType field.
@@ -38,7 +48,7 @@ func (r *mutationResolver) DeleteInventoryType(ctx context.Context, id string) (
 
 // GetInventoryType is the resolver for the getInventoryType field.
 func (r *queryResolver) GetInventoryType(ctx context.Context, id *string) (*types.InventoryTypeResponse, error) {
-	logctx := helper.LogContext(ClassName, "DeleteInventoryType")
+	logctx := helper.LogContext(ClassName, "GetInventoryType")
 	logctx.Logger([]interface{}{}, "")
 	// panic(fmt.Errorf("not implemented: GetInventoryTypes - getInventoryTypes"))
 	return inventoryService.GetInventoryType(id)
@@ -48,10 +58,15 @@ func (r *queryResolver) GetInventoryType(ctx context.Context, id *string) (*type
 func (r *queryResolver) GetInventoryTypes(ctx context.Context, params *types.ParamsInventoryType) (*types.InventoryTypesResponse, error) {
 	logctx := helper.LogContext(ClassName, "GetInventoryTypes")
 	logctx.Logger([]interface{}{params}, "param")
+	userInfo := middlewares.UserInfo(ctx)
 
-	return inventoryService.GetInventoryTypes(params)
-	// panic(fmt.Errorf("not implemented: GetInventoryTypes - getInventoryTypes"))
+	return inventoryService.GetInventoryTypes(params, userInfo)
 }
+
+// InventoryType returns graph.InventoryTypeResolver implementation.
+func (r *Resolver) InventoryType() graph.InventoryTypeResolver { return &inventoryTypeResolver{r} }
+
+type inventoryTypeResolver struct{ *Resolver }
 
 // !!! WARNING !!!
 // The code below was going to be deleted when updating resolvers. It has been copied here so you have
