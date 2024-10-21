@@ -38,7 +38,11 @@
         "inventory": "Inventory Management|Update Inventory Success"
       }
     },
-    "duplicated": "Inventory Management|Duplicated Name"
+    "duplicated": "Inventory Management|Duplicated Name",
+    "failed": {
+      "create": "Inventory Management|Create Failed",
+      "update": "Inventory Management|Update Failed"
+    }
   },
   "favorite": {
     "add": "Inventory Management|Add Favorite",

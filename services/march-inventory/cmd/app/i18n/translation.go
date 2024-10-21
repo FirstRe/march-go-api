@@ -9,6 +9,7 @@ import (
 )
 
 var bundle *i18n.Bundle
+var localT *i18n.Localizer
 
 func InitI18n() {
 	dir, _ := os.Getwd()
@@ -20,13 +21,20 @@ func InitI18n() {
 	bundle.MustLoadMessageFile(dir + "/cmd/app/i18n/th/th.json")
 }
 
-func LocalizeMessage(localizer *i18n.Localizer, messageID string) string {
-	translation := localizer.MustLocalize(&i18n.LocalizeConfig{
+func InitLocalizer(langCode string) {
+	localT = i18n.NewLocalizer(bundle, langCode)
+}
+
+func LocalizeMessage(messageID string) string {
+	var translation string
+	defer func() {
+		if r := recover(); r != nil {
+			translation = ""
+		}
+	}()
+
+	translation = localT.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: messageID,
 	})
 	return translation
-}
-
-func InitLocalizer(langCode string) *i18n.Localizer {
-	return i18n.NewLocalizer(bundle, langCode)
 }

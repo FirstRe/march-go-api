@@ -10,9 +10,9 @@ import (
 	"core/app/middlewares"
 	"fmt"
 	"log"
-	"march-inventory/cmd/app/common"
 	"march-inventory/cmd/app/graph/types"
 	"march-inventory/cmd/app/services/inventoryService"
+	"march-inventory/cmd/app/statusCode"
 )
 
 // UploadInventory is the resolver for the uploadInventory field.
@@ -53,7 +53,7 @@ func (r *queryResolver) GetInventoryNames(ctx context.Context) (*types.Inventory
 // GetInventory is the resolver for the getInventory field.
 func (r *queryResolver) GetInventory(ctx context.Context, id *string) (*types.InventoryDataResponse, error) {
 	reponse := types.InventoryDataResponse{
-		Status: common.StatusResponse(500, ""),
+		Status: statusCode.Success("OK"),
 		Data:   nil,
 	}
 	return &reponse, nil

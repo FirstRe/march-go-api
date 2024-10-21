@@ -4,11 +4,12 @@ import (
 	. "core/app/helper"
 	"errors"
 	"log"
-	"march-inventory/cmd/app/common"
-	gormDb "march-inventory/cmd/app/common/gorm"
 	"march-inventory/cmd/app/dto"
 	"march-inventory/cmd/app/graph/model"
 	"march-inventory/cmd/app/graph/types"
+	"march-inventory/cmd/app/statusCode"
+	gormDb "march-inventory/cmd/app/statusCode/gorm"
+
 	"gorm.io/gorm"
 )
 
@@ -21,7 +22,7 @@ func UpsertInventory(input types.UpsertInventoryInput) (*types.MutationInventory
 
 	if findDup.Name != "" && input.ID == nil {
 		reponseError := types.MutationInventoryResponse{
-			Status: common.StatusResponse(400, "Duplicated"),
+			Status: statusCode.Duplicated("Duplicated"),
 			Data:   nil,
 		}
 		return &reponseError, nil
@@ -29,7 +30,7 @@ func UpsertInventory(input types.UpsertInventoryInput) (*types.MutationInventory
 
 	if input.ID != nil && findDup.Name != "" && *input.ID != findDup.ID {
 		reponseError := types.MutationInventoryResponse{
-			Status: common.StatusResponse(400, "Bad Request"),
+			Status: statusCode.BadRequest("Bad Request"),
 			Data:   nil,
 		}
 		return &reponseError, nil
@@ -46,14 +47,14 @@ func UpsertInventory(input types.UpsertInventoryInput) (*types.MutationInventory
 
 	log.Printf("inventoryData: %+v", inventoryData)
 
-	if err := gormDb.Repos.Model(&inventoryData).Save(&inventoryData).Error; err != nil {
+	if err := gormDb.Repos.Save(&inventoryData).Error; err != nil {
 		if errors.Is(err, gorm.ErrMissingWhereClause) {
 			log.Printf("err ErrMissingWhereClause: %+v", err)
-			if err := gormDb.Repos.Model(&inventoryData).Save(&inventoryData).Where("id = ?", inventoryData.ID).Error; err != nil {
+			if err := gormDb.Repos.Save(&inventoryData).Where("id = ?", inventoryData.ID).Error; err != nil {
 				log.Printf("err Create: %+v", err)
 			} else {
 				reponsePass := types.MutationInventoryResponse{
-					Status: common.StatusResponse(200, "OK"),
+					Status: statusCode.Success("OK"),
 					Data: &types.ResponseID{
 						ID: &inventoryData.ID,
 					},
@@ -62,7 +63,7 @@ func UpsertInventory(input types.UpsertInventoryInput) (*types.MutationInventory
 			}
 		} else if errors.Is(err, gorm.ErrForeignKeyViolated) {
 			reponseError := types.MutationInventoryResponse{
-				Status: common.StatusResponse(400, "Bad Request"),
+				Status: statusCode.BadRequest("Bad Request"),
 				Data:   nil,
 			}
 			return &reponseError, nil
@@ -70,7 +71,7 @@ func UpsertInventory(input types.UpsertInventoryInput) (*types.MutationInventory
 			log.Printf("err Create: %+v", err)
 		}
 		reponseError := types.MutationInventoryResponse{
-			Status: common.StatusResponse(500, "CREATE ERROR"),
+			Status: statusCode.InternalError("CREATE ERROR"),
 			Data:   nil,
 		}
 		return &reponseError, nil
@@ -79,7 +80,7 @@ func UpsertInventory(input types.UpsertInventoryInput) (*types.MutationInventory
 	log.Printf("inventoryData: %+v", inventoryData)
 
 	reponsePass := types.MutationInventoryResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: statusCode.Success("OK"),
 		Data: &types.ResponseID{
 			ID: &inventoryData.ID,
 		},
@@ -96,14 +97,14 @@ func DeleteInventoryTypes(id string) (*types.MutationInventoryResponse, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Printf("InventoryType with id %s not found", id)
 			reponseError := types.MutationInventoryResponse{
-				Status: common.StatusResponse(404, "Not found"),
+				Status: statusCode.NotFound("Not found"),
 				Data:   nil,
 			}
 			return &reponseError, nil
 		}
 		log.Printf("Error fetching InventoryType: %+v", err)
 		reponseError := types.MutationInventoryResponse{
-			Status: common.StatusResponse(500, "Internal server error"),
+			Status: statusCode.InternalError("Internal server error"),
 			Data:   nil,
 		}
 		return &reponseError, err
@@ -112,14 +113,14 @@ func DeleteInventoryTypes(id string) (*types.MutationInventoryResponse, error) {
 	if err := gormDb.Repos.Model(&inventoryType).Update("deleted", true).Error; err != nil {
 		log.Printf("Error deleting InventoryType: %+v", err)
 		reponseError := types.MutationInventoryResponse{
-			Status: common.StatusResponse(500, "Error deleting inventory type"),
+			Status: statusCode.InternalError("Error deleting inventory type"),
 			Data:   nil,
 		}
 		return &reponseError, err
 	}
 
 	reponseSuccess := types.MutationInventoryResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: statusCode.Success("OK"),
 		Data:   nil,
 	}
 	return &reponseSuccess, nil
@@ -156,7 +157,7 @@ func GetInventoryTypess(params *types.ParamsInventoryType) (*types.InventoryType
 	}
 
 	reponsePass := types.InventoryTypesResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: statusCode.Success("OK"),
 		Data:   inventoryTypesData,
 	}
 
@@ -169,15 +170,13 @@ func GetInventoryTypesss(id *string) (*types.InventoryTypeResponse, error) {
 	inventoryType := model.InventoryType{}
 	if err := gormDb.Repos.Model(&inventoryType).Where("id = ?", id).First(&inventoryType).Error; err != nil {
 		logctx.Logger([]interface{}{err}, "err GetInventoryType Model Data")
-		code := 500
 		message := "Internal Error"
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			code = 400
 			message = "Not Found"
 		}
 
 		reponseError := types.InventoryTypeResponse{
-			Status: common.StatusResponse(code, message),
+			Status: statusCode.BadRequest(message),
 			Data:   nil,
 		}
 		return &reponseError, nil
@@ -195,7 +194,7 @@ func GetInventoryTypesss(id *string) (*types.InventoryTypeResponse, error) {
 	}
 
 	reponsePass := types.InventoryTypeResponse{
-		Status: common.StatusResponse(200, "OK"),
+		Status: statusCode.Success("OK"),
 		Data:   &inventoryTypeData,
 	}
 

@@ -32,18 +32,18 @@ func (r *mutationResolver) UpsertInventoryType(ctx context.Context, input types.
 	logctx := helper.LogContext(ClassName, "UpsertInventoryType")
 
 	userInfo := middlewares.UserInfo(ctx)
-	logctx.Logger([]interface{}{userInfo}, "userInfo")
+	logctx.Logger(userInfo, "userInfo")
 
-	return inventoryService.UpsertInventoryType(&input)
+	return inventoryService.UpsertInventoryType(&input, userInfo)
 }
 
 // DeleteInventoryType is the resolver for the deleteInventoryType field.
 func (r *mutationResolver) DeleteInventoryType(ctx context.Context, id string) (*types.MutationInventoryResponse, error) {
 	// panic(fmt.Errorf("not implemented: DeleteInventoryType - deleteInventoryType"))
 	logctx := helper.LogContext(ClassName, "DeleteInventoryType")
-	logctx.Logger([]interface{}{}, "")
-
-	return inventoryService.DeleteInventoryType(id)
+	userInfo := middlewares.UserInfo(ctx)
+	logctx.Logger(userInfo, "userInfo")
+	return inventoryService.DeleteInventoryType(id, userInfo)
 }
 
 // GetInventoryType is the resolver for the getInventoryType field.

@@ -4,10 +4,10 @@ import (
 	"core/app/helper"
 	"errors"
 	"log"
-	"march-inventory/cmd/app/common"
-	gormDb "march-inventory/cmd/app/common/gorm"
 	"march-inventory/cmd/app/graph/model"
 	"march-inventory/cmd/app/graph/types"
+	"march-inventory/cmd/app/statusCode"
+	gormDb "march-inventory/cmd/app/statusCode/gorm"
 
 	"gorm.io/gorm"
 )
@@ -21,7 +21,7 @@ func UpsertInventoryBranch(input *types.UpsertInventoryBranchInput) (*types.Muta
 
 	if findDup.Name != "" && input.ID == nil {
 		reponseError := types.MutationInventoryBranchResponse{
-			Status: common.StatusResponse(400, "Duplicated"),
+			Status: statusCode.Duplicated("Duplicated"),
 			Data:   nil,
 		}
 		return &reponseError, nil
@@ -29,7 +29,7 @@ func UpsertInventoryBranch(input *types.UpsertInventoryBranchInput) (*types.Muta
 
 	if input.ID != nil && findDup.Name != "" && *input.ID != findDup.ID {
 		reponseError := types.MutationInventoryBranchResponse{
-			Status: common.StatusResponse(400, "Bad Request"),
+			Status: statusCode.BadRequest("Bad Request"),
 			Data:   nil,
 		}
 		return &reponseError, nil
@@ -52,14 +52,14 @@ func UpsertInventoryBranch(input *types.UpsertInventoryBranchInput) (*types.Muta
 
 	log.Printf("inventoryBranchData%+v", inventoryBranchData)
 
-	if err := gormDb.Repos.Model(&model.InventoryBranch{}).Save(&inventoryBranchData).Error; err != nil {
+	if err := gormDb.Repos.Save(&inventoryBranchData).Error; err != nil {
 		if errors.Is(err, gorm.ErrMissingWhereClause) {
 			log.Printf("err ErrMissingWhereClause: %+v", err)
-			if err := gormDb.Repos.Model(&model.InventoryBranch{}).Save(&inventoryBranchData).Where("id = ?", inventoryBranchData.ID).Error; err != nil {
+			if err := gormDb.Repos.Save(&inventoryBranchData).Where("id = ?", inventoryBranchData.ID).Error; err != nil {
 				log.Printf("err Create: %+v", err)
 			} else {
 				reponsePass := types.MutationInventoryBranchResponse{
-					Status: common.StatusResponse(1000, "OK"),
+					Status: statusCode.Success("OK"),
 					Data: &types.ResponseID{
 						ID: &inventoryBranchData.ID,
 					},
@@ -71,7 +71,7 @@ func UpsertInventoryBranch(input *types.UpsertInventoryBranchInput) (*types.Muta
 
 		}
 		reponseError := types.MutationInventoryBranchResponse{
-			Status: common.StatusResponse(500, "CREATE ERROR"),
+			Status: statusCode.InternalError("CREATE ERROR"),
 			Data:   nil,
 		}
 		return &reponseError, nil
@@ -80,7 +80,7 @@ func UpsertInventoryBranch(input *types.UpsertInventoryBranchInput) (*types.Muta
 	log.Printf("inventoryBranchData: %+v", inventoryBranchData)
 
 	reponsePass := types.MutationInventoryBranchResponse{
-		Status: common.StatusResponse(1000, "OK"),
+		Status: statusCode.Success("OK"),
 		Data: &types.ResponseID{
 			ID: &inventoryBranchData.ID,
 		},
@@ -97,14 +97,14 @@ func DeleteInventoryBranch(id string) (*types.MutationInventoryBranchResponse, e
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Printf("InventoryBranch with id %s not found", id)
 			reponseError := types.MutationInventoryBranchResponse{
-				Status: common.StatusResponse(404, "Not found"),
+				Status: statusCode.NotFound("Not found"),
 				Data:   nil,
 			}
 			return &reponseError, nil
 		}
 		log.Printf("Error fetching InventoryBranch: %+v", err)
 		reponseError := types.MutationInventoryBranchResponse{
-			Status: common.StatusResponse(500, "Internal server error"),
+			Status: statusCode.InternalError("Internal server error"),
 			Data:   nil,
 		}
 		return &reponseError, err
@@ -113,14 +113,14 @@ func DeleteInventoryBranch(id string) (*types.MutationInventoryBranchResponse, e
 	if err := gormDb.Repos.Model(&inventoryBranch).Update("deleted", true).Error; err != nil {
 		log.Printf("Error deleting InventoryBranch: %+v", err)
 		reponseError := types.MutationInventoryBranchResponse{
-			Status: common.StatusResponse(500, "Error deleting inventory type"),
+			Status: statusCode.InternalError("Error deleting inventory type"),
 			Data:   nil,
 		}
 		return &reponseError, err
 	}
 
 	reponseSuccess := types.MutationInventoryBranchResponse{
-		Status: common.StatusResponse(1000, "OK"),
+		Status: statusCode.Success("OK"),
 		Data:   nil,
 	}
 	return &reponseSuccess, nil
@@ -156,7 +156,7 @@ func GetInventoryBranchs(params *types.ParamsInventoryBranch) (*types.InventoryB
 	}
 
 	reponsePass := types.InventoryBranchsDataResponse{
-		Status: common.StatusResponse(1000, "OK"),
+		Status: statusCode.Success("OK"),
 		Data:   inventoryBranchsData,
 	}
 
