@@ -2,31 +2,34 @@ package inventoryService
 
 import (
 	"core/app/helper"
+	"core/app/middlewares"
 	"errors"
 	"log"
 	"march-inventory/cmd/app/graph/model"
 	"march-inventory/cmd/app/graph/types"
+	translation "march-inventory/cmd/app/i18n"
 	"march-inventory/cmd/app/statusCode"
 	gormDb "march-inventory/cmd/app/statusCode/gorm"
 
 	"gorm.io/gorm"
 )
 
-func UpsertInventoryBrand(input *types.UpsertInventoryBrandInput) (*types.MutationInventoryBrandResponse, error) {
+func UpsertInventoryBrand(input *types.UpsertInventoryBrandInput, userInfo middlewares.UserClaims) (*types.MutationInventoryBrandResponse, error) {
 	logctx := helper.LogContext(ClassName, "UpsertInventoryBrand")
-	logctx.Logger([]interface{}{input}, "input")
-
+	logctx.Logger(input, "input")
 	findDup := model.InventoryBrand{}
-	gormDb.Repos.Model(&model.InventoryBrand{}).Where("name = ?", input.Name).Find(&findDup)
+	typeName := input.Name + "|" + userInfo.UserInfo.ShopsID
+	gormDb.Repos.Model(&model.InventoryBrand{}).Where("name = ? AND shops_Id = ?", typeName, userInfo.UserInfo.ShopsID).First(&findDup)
 
 	if findDup.Name != "" && input.ID == nil {
 		reponseError := types.MutationInventoryBrandResponse{
-			Status: statusCode.Duplicated("Duplicated"),
+			Status: statusCode.BadRequest(translation.LocalizeMessage("Upsert.duplicated")),
 			Data:   nil,
 		}
 		return &reponseError, nil
 	}
 
+	logctx.Logger(findDup, "findDup")
 	if input.ID != nil && findDup.Name != "" && *input.ID != findDup.ID {
 		reponseError := types.MutationInventoryBrandResponse{
 			Status: statusCode.BadRequest("Bad Request"),
@@ -35,100 +38,117 @@ func UpsertInventoryBrand(input *types.UpsertInventoryBrandInput) (*types.Mutati
 		return &reponseError, nil
 	}
 
-	inventoryBrandData := model.InventoryBrand{
-		Name:        input.Name,
+	findDup = model.InventoryBrand{
+		ID:          "",
+		Name:        typeName,
 		Description: input.Description,
-		CreatedBy:   "system",
-		UpdatedBy:   "system",
+		ShopsID:     userInfo.UserInfo.ShopsID,
+		CreatedBy:   userInfo.UserInfo.UserName,
+		UpdatedBy:   userInfo.UserInfo.UserName,
 	}
+
+	onOkLocalT := "Upsert.success.create.brand"
+	saveFailedLocalT := "Upsert.failed.create"
 
 	if input.ID != nil {
-		inventoryBrandData.ID = *input.ID
-		inventoryBrandData.CreatedBy = findDup.CreatedBy
-		inventoryBrandData.UpdatedBy = findDup.UpdatedBy
-		inventoryBrandData.Deleted = findDup.Deleted
-		log.Printf("input.ID: %+v", input.ID)
+		findDup.ID = *input.ID
+		onOkLocalT = "Upsert.success.update.brand"
+		saveFailedLocalT = "Upsert.failed.update"
+		if findDup.ShopsID != userInfo.UserInfo.ShopsID {
+			reponseError := types.MutationInventoryBrandResponse{
+				Status: statusCode.Forbidden("Unauthorized ShopId"),
+				Data:   nil,
+			}
+			return &reponseError, nil
+		}
 	}
 
-	log.Printf("inventoryBrandData%+v", inventoryBrandData)
+	logctx.Logger(findDup, "InventoryBrandData", true)
 
-	if err := gormDb.Repos.Save(&inventoryBrandData).Error; err != nil {
-		if errors.Is(err, gorm.ErrMissingWhereClause) {
-			log.Printf("err ErrMissingWhereClause: %+v", err)
-			if err := gormDb.Repos.Save(&inventoryBrandData).Where("id = ?", inventoryBrandData.ID).Error; err != nil {
-				log.Printf("err Create: %+v", err)
-			} else {
-				reponsePass := types.MutationInventoryBrandResponse{
-					Status: statusCode.Success("OK"),
-					Data: &types.ResponseID{
-						ID: &inventoryBrandData.ID,
-					},
-				}
-				return &reponsePass, nil
-			}
-		} else {
-			log.Printf("err Create: %+v", err)
-
-		}
+	if result := gormDb.Repos.Save(&findDup); result.Error != nil {
+		logctx.Logger(result.Error, "[error-api] Upsert")
 		reponseError := types.MutationInventoryBrandResponse{
-			Status: statusCode.InternalError("CREATE ERROR"),
+			Status: statusCode.InternalError(translation.LocalizeMessage(saveFailedLocalT)),
+			Data:   nil,
+		}
+		return &reponseError, nil
+	} else {
+		reponsePass := types.MutationInventoryBrandResponse{
+			Status: statusCode.Success(translation.LocalizeMessage(onOkLocalT)),
+			Data: &types.ResponseID{
+				ID: &findDup.ID,
+			},
+		}
+		return &reponsePass, nil
+	}
+
+}
+
+func DeleteInventoryBrand(id string, userInfo middlewares.UserClaims) (*types.MutationInventoryBrandResponse, error) {
+	logctx := helper.LogContext(ClassName, "DeleteInventoryBrand")
+	logctx.Logger(id, "id")
+
+	inventoryBrand := model.InventoryBrand{}
+	if err := gormDb.Repos.Where("id = ?", id).First(&inventoryBrand).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			logctx.Logger(id, "[error-api] InventoryBrand with id not found")
+			reponseError := types.MutationInventoryBrandResponse{
+				Status: statusCode.BadRequest("Not found"),
+				Data:   nil,
+			}
+			return &reponseError, nil
+		}
+		logctx.Logger(err, "[error-api] fetching InventoryBrand")
+
+		reponseError := types.MutationInventoryBrandResponse{
+			Status: statusCode.InternalError(""),
+			Data:   nil,
+		}
+		return &reponseError, err
+	}
+
+	if inventoryBrand.ShopsID != userInfo.UserInfo.ShopsID {
+		reponseError := types.MutationInventoryBrandResponse{
+			Status: statusCode.BadRequest("Unauthorized ShopId"),
 			Data:   nil,
 		}
 		return &reponseError, nil
 	}
 
-	log.Printf("inventoryBrandData: %+v", inventoryBrandData)
+	inventory := model.Inventory{}
+	result := gormDb.Repos.Where("inventory_brand_id = ?", id).First(&inventory)
 
-	reponsePass := types.MutationInventoryBrandResponse{
-		Status: statusCode.Success("OK"),
-		Data: &types.ResponseID{
-			ID: &inventoryBrandData.ID,
-		},
-	}
-	return &reponsePass, nil
-}
+	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		logctx.Logger(id, "Inventory with InventoryBrand not found")
 
-func DeleteInventoryBrand(id string) (*types.MutationInventoryBrandResponse, error) {
-	logctx := helper.LogContext(ClassName, "DeleteInventoryBrand")
-	logctx.Logger([]interface{}{id}, "id")
-
-	inventoryBrand := model.InventoryBrand{}
-	if err := gormDb.Repos.Model(&model.InventoryBrand{}).Where("id = ?", id).First(&inventoryBrand).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Printf("InventoryBrand with id %s not found", id)
+		if err := gormDb.Repos.Model(&inventoryBrand).Update("deleted", true).Error; err != nil {
+			logctx.Logger(id, "[error-api] deleting InventoryBrand")
 			reponseError := types.MutationInventoryBrandResponse{
-				Status: statusCode.NotFound("Not found"),
+				Status: statusCode.InternalError("Error deleting inventory brand"),
 				Data:   nil,
 			}
-			return &reponseError, nil
+			return &reponseError, err
+		} else {
+			reponseSuccess := types.MutationInventoryBrandResponse{
+				Status: statusCode.Success(translation.LocalizeMessage("Success.brand")),
+				Data:   nil,
+			}
+			return &reponseSuccess, nil
 		}
-		log.Printf("Error fetching InventoryBrand: %+v", err)
+	} else {
 		reponseError := types.MutationInventoryBrandResponse{
-			Status: statusCode.InternalError("Internal server error"),
+			Status: statusCode.BadRequest(translation.LocalizeMessage("onUse.brand")),
 			Data:   nil,
 		}
-		return &reponseError, err
+		return &reponseError, nil
 	}
 
-	if err := gormDb.Repos.Model(&inventoryBrand).Update("deleted", true).Error; err != nil {
-		log.Printf("Error deleting InventoryBrand: %+v", err)
-		reponseError := types.MutationInventoryBrandResponse{
-			Status: statusCode.InternalError("Error deleting inventory type"),
-			Data:   nil,
-		}
-		return &reponseError, err
-	}
-
-	reponseSuccess := types.MutationInventoryBrandResponse{
-		Status: statusCode.Success("OK"),
-		Data:   nil,
-	}
-	return &reponseSuccess, nil
 }
 
-func GetInventoryBrands(params *types.ParamsInventoryBrand) (*types.InventoryBrandsDataResponse, error) {
+func GetInventoryBrands(params *types.ParamsInventoryBrand, userInfo middlewares.UserClaims) (*types.InventoryBrandsDataResponse, error) {
 	logctx := helper.LogContext(ClassName, "GetInventoryBrands")
 	logctx.Logger([]interface{}{}, "id")
+
 	inventoryBrands := []model.InventoryBrand{}
 
 	searchParam := ""
@@ -138,20 +158,20 @@ func GetInventoryBrands(params *types.ParamsInventoryBrand) (*types.InventoryBra
 	log.Printf("searchParam: %+v", searchParam)
 
 	if err := gormDb.Repos.Model(&inventoryBrands).Where("name LIKE ?", searchParam).Not("deleted = ?", true).Order("created_at asc").Find(&inventoryBrands).Error; err != nil {
-		logctx.Logger([]interface{}{err}, "err GetInventoryTypes Model Data")
+		logctx.Logger([]interface{}{err}, "err GetInventoryBrands Model Data")
 	}
-	logctx.Logger([]interface{}{inventoryBrands}, "InventoryBrand")
+	logctx.Logger([]interface{}{inventoryBrands}, "inventoryBrands")
 	inventoryBrandsData := make([]*types.InventoryBrand, len(inventoryBrands))
 
-	for d, InventoryBrand := range inventoryBrands {
+	for d, inventoryBrand := range inventoryBrands {
 		inventoryBrandsData[d] = &types.InventoryBrand{
-			ID:          &InventoryBrand.ID,
-			Name:        &InventoryBrand.Name,
-			Description: InventoryBrand.Description,
-			CreatedBy:   &InventoryBrand.CreatedBy,
-			CreatedAt:   InventoryBrand.CreatedAt.String(),
-			UpdatedBy:   &InventoryBrand.UpdatedBy,
-			UpdatedAt:   InventoryBrand.UpdatedAt.String(),
+			ID:          &inventoryBrand.ID,
+			Name:        &inventoryBrand.Name,
+			Description: inventoryBrand.Description,
+			CreatedBy:   &inventoryBrand.CreatedBy,
+			CreatedAt:   inventoryBrand.CreatedAt.String(),
+			UpdatedBy:   &inventoryBrand.UpdatedBy,
+			UpdatedAt:   inventoryBrand.UpdatedAt.String(),
 		}
 	}
 
@@ -164,6 +184,7 @@ func GetInventoryBrands(params *types.ParamsInventoryBrand) (*types.InventoryBra
 }
 
 func GetInventoryBrand(id *string) (*types.InventoryBrand, error) {
+	//notuse
 	logctx := helper.LogContext(ClassName, "GetInventoryBrand")
 	logctx.Logger([]interface{}{id}, "id")
 	inventoryBrand := model.InventoryBrand{}

@@ -45,8 +45,8 @@ func UpsertInventoryType(input *types.UpsertInventoryTypeInput, userInfo middlew
 		Name:        typeName,
 		Description: input.Description,
 		ShopsID:     userInfo.UserInfo.ShopsID,
-		CreatedBy:   userInfo.UserInfo.UserId,
-		UpdatedBy:   userInfo.UserInfo.UserId,
+		CreatedBy:   userInfo.UserInfo.UserName,
+		UpdatedBy:   userInfo.UserInfo.UserName,
 	}
 
 	onOkLocalT := "Upsert.success.create.type"

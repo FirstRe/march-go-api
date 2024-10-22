@@ -2,31 +2,34 @@ package inventoryService
 
 import (
 	"core/app/helper"
+	"core/app/middlewares"
 	"errors"
 	"log"
 	"march-inventory/cmd/app/graph/model"
 	"march-inventory/cmd/app/graph/types"
+	translation "march-inventory/cmd/app/i18n"
 	"march-inventory/cmd/app/statusCode"
 	gormDb "march-inventory/cmd/app/statusCode/gorm"
 
 	"gorm.io/gorm"
 )
 
-func UpsertInventoryBranch(input *types.UpsertInventoryBranchInput) (*types.MutationInventoryBranchResponse, error) {
+func UpsertInventoryBranch(input *types.UpsertInventoryBranchInput, userInfo middlewares.UserClaims) (*types.MutationInventoryBranchResponse, error) {
 	logctx := helper.LogContext(ClassName, "UpsertInventoryBranch")
-	logctx.Logger([]interface{}{input}, "input")
-
+	logctx.Logger(input, "input")
 	findDup := model.InventoryBranch{}
-	gormDb.Repos.Model(&model.InventoryBranch{}).Where("name = ?", input.Name).Find(&findDup)
+	typeName := input.Name + "|" + userInfo.UserInfo.ShopsID
+	gormDb.Repos.Model(&model.InventoryBranch{}).Where("name = ? AND shops_Id = ?", typeName, userInfo.UserInfo.ShopsID).First(&findDup)
 
 	if findDup.Name != "" && input.ID == nil {
 		reponseError := types.MutationInventoryBranchResponse{
-			Status: statusCode.Duplicated("Duplicated"),
+			Status: statusCode.BadRequest(translation.LocalizeMessage("Upsert.duplicated")),
 			Data:   nil,
 		}
 		return &reponseError, nil
 	}
 
+	logctx.Logger(findDup, "findDup")
 	if input.ID != nil && findDup.Name != "" && *input.ID != findDup.ID {
 		reponseError := types.MutationInventoryBranchResponse{
 			Status: statusCode.BadRequest("Bad Request"),
@@ -35,100 +38,117 @@ func UpsertInventoryBranch(input *types.UpsertInventoryBranchInput) (*types.Muta
 		return &reponseError, nil
 	}
 
-	inventoryBranchData := model.InventoryBranch{
-		Name:        input.Name,
+	findDup = model.InventoryBranch{
+		ID:          "",
+		Name:        typeName,
 		Description: input.Description,
-		CreatedBy:   "system",
-		UpdatedBy:   "system",
+		ShopsID:     userInfo.UserInfo.ShopsID,
+		CreatedBy:   userInfo.UserInfo.UserName,
+		UpdatedBy:   userInfo.UserInfo.UserName,
 	}
+
+	onOkLocalT := "Upsert.success.create.branch"
+	saveFailedLocalT := "Upsert.failed.create"
 
 	if input.ID != nil {
-		inventoryBranchData.ID = *input.ID
-		inventoryBranchData.CreatedBy = findDup.CreatedBy
-		inventoryBranchData.UpdatedBy = findDup.UpdatedBy
-		inventoryBranchData.Deleted = findDup.Deleted
-		log.Printf("input.ID: %+v", input.ID)
+		findDup.ID = *input.ID
+		onOkLocalT = "Upsert.success.update.branch"
+		saveFailedLocalT = "Upsert.failed.update"
+		if findDup.ShopsID != userInfo.UserInfo.ShopsID {
+			reponseError := types.MutationInventoryBranchResponse{
+				Status: statusCode.Forbidden("Unauthorized ShopId"),
+				Data:   nil,
+			}
+			return &reponseError, nil
+		}
 	}
 
-	log.Printf("inventoryBranchData%+v", inventoryBranchData)
+	logctx.Logger(findDup, "InventoryBranchData", true)
 
-	if err := gormDb.Repos.Save(&inventoryBranchData).Error; err != nil {
-		if errors.Is(err, gorm.ErrMissingWhereClause) {
-			log.Printf("err ErrMissingWhereClause: %+v", err)
-			if err := gormDb.Repos.Save(&inventoryBranchData).Where("id = ?", inventoryBranchData.ID).Error; err != nil {
-				log.Printf("err Create: %+v", err)
-			} else {
-				reponsePass := types.MutationInventoryBranchResponse{
-					Status: statusCode.Success("OK"),
-					Data: &types.ResponseID{
-						ID: &inventoryBranchData.ID,
-					},
-				}
-				return &reponsePass, nil
-			}
-		} else {
-			log.Printf("err Create: %+v", err)
-
-		}
+	if result := gormDb.Repos.Save(&findDup); result.Error != nil {
+		logctx.Logger(result.Error, "[error-api] Upsert")
 		reponseError := types.MutationInventoryBranchResponse{
-			Status: statusCode.InternalError("CREATE ERROR"),
+			Status: statusCode.InternalError(translation.LocalizeMessage(saveFailedLocalT)),
+			Data:   nil,
+		}
+		return &reponseError, nil
+	} else {
+		reponsePass := types.MutationInventoryBranchResponse{
+			Status: statusCode.Success(translation.LocalizeMessage(onOkLocalT)),
+			Data: &types.ResponseID{
+				ID: &findDup.ID,
+			},
+		}
+		return &reponsePass, nil
+	}
+
+}
+
+func DeleteInventoryBranch(id string, userInfo middlewares.UserClaims) (*types.MutationInventoryBranchResponse, error) {
+	logctx := helper.LogContext(ClassName, "DeleteInventoryBranch")
+	logctx.Logger(id, "id")
+
+	inventoryBranch := model.InventoryBranch{}
+	if err := gormDb.Repos.Where("id = ?", id).First(&inventoryBranch).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			logctx.Logger(id, "[error-api] InventoryBranch with id not found")
+			reponseError := types.MutationInventoryBranchResponse{
+				Status: statusCode.BadRequest("Not found"),
+				Data:   nil,
+			}
+			return &reponseError, nil
+		}
+		logctx.Logger(err, "[error-api] fetching InventoryBranch")
+
+		reponseError := types.MutationInventoryBranchResponse{
+			Status: statusCode.InternalError(""),
+			Data:   nil,
+		}
+		return &reponseError, err
+	}
+	logctx.Logger(inventoryBranch, "[log-api] inventoryBranch")
+	if inventoryBranch.ShopsID != userInfo.UserInfo.ShopsID {
+		reponseError := types.MutationInventoryBranchResponse{
+			Status: statusCode.BadRequest("Unauthorized ShopId"),
 			Data:   nil,
 		}
 		return &reponseError, nil
 	}
 
-	log.Printf("inventoryBranchData: %+v", inventoryBranchData)
+	inventory := model.Inventory{}
+	result := gormDb.Repos.Where("inventory_branch_id = ?", id).First(&inventory)
 
-	reponsePass := types.MutationInventoryBranchResponse{
-		Status: statusCode.Success("OK"),
-		Data: &types.ResponseID{
-			ID: &inventoryBranchData.ID,
-		},
-	}
-	return &reponsePass, nil
-}
+	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		logctx.Logger(id, "Inventory with InventoryBranch not found")
 
-func DeleteInventoryBranch(id string) (*types.MutationInventoryBranchResponse, error) {
-	logctx := helper.LogContext(ClassName, "DeleteInventoryBranch")
-	logctx.Logger([]interface{}{id}, "id")
-
-	inventoryBranch := model.InventoryBranch{}
-	if err := gormDb.Repos.Model(&model.InventoryBranch{}).Where("id = ?", id).First(&inventoryBranch).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Printf("InventoryBranch with id %s not found", id)
+		if err := gormDb.Repos.Model(&inventoryBranch).Update("deleted", true).Error; err != nil {
+			logctx.Logger(id, "[error-api] deleting InventoryBranch")
 			reponseError := types.MutationInventoryBranchResponse{
-				Status: statusCode.NotFound("Not found"),
+				Status: statusCode.InternalError("Error deleting inventory branch"),
 				Data:   nil,
 			}
-			return &reponseError, nil
+			return &reponseError, err
+		} else {
+			reponseSuccess := types.MutationInventoryBranchResponse{
+				Status: statusCode.Success(translation.LocalizeMessage("Success.branch")),
+				Data:   nil,
+			}
+			return &reponseSuccess, nil
 		}
-		log.Printf("Error fetching InventoryBranch: %+v", err)
+	} else {
 		reponseError := types.MutationInventoryBranchResponse{
-			Status: statusCode.InternalError("Internal server error"),
+			Status: statusCode.BadRequest(translation.LocalizeMessage("onUse.branch")),
 			Data:   nil,
 		}
-		return &reponseError, err
+		return &reponseError, nil
 	}
 
-	if err := gormDb.Repos.Model(&inventoryBranch).Update("deleted", true).Error; err != nil {
-		log.Printf("Error deleting InventoryBranch: %+v", err)
-		reponseError := types.MutationInventoryBranchResponse{
-			Status: statusCode.InternalError("Error deleting inventory type"),
-			Data:   nil,
-		}
-		return &reponseError, err
-	}
-
-	reponseSuccess := types.MutationInventoryBranchResponse{
-		Status: statusCode.Success("OK"),
-		Data:   nil,
-	}
-	return &reponseSuccess, nil
 }
 
-func GetInventoryBranchs(params *types.ParamsInventoryBranch) (*types.InventoryBranchsDataResponse, error) {
+func GetInventoryBranchs(params *types.ParamsInventoryBranch, userInfo middlewares.UserClaims) (*types.InventoryBranchsDataResponse, error) {
 	logctx := helper.LogContext(ClassName, "GetInventoryBranchs")
 	logctx.Logger([]interface{}{}, "id")
+
 	inventoryBranchs := []model.InventoryBranch{}
 
 	searchParam := ""
@@ -138,20 +158,20 @@ func GetInventoryBranchs(params *types.ParamsInventoryBranch) (*types.InventoryB
 	log.Printf("searchParam: %+v", searchParam)
 
 	if err := gormDb.Repos.Model(&inventoryBranchs).Where("name LIKE ?", searchParam).Not("deleted = ?", true).Order("created_at asc").Find(&inventoryBranchs).Error; err != nil {
-		logctx.Logger([]interface{}{err}, "err GetInventoryTypes Model Data")
+		logctx.Logger([]interface{}{err}, "err GetInventoryBranchs Model Data")
 	}
-	logctx.Logger([]interface{}{inventoryBranchs}, "InventoryBranch")
+	logctx.Logger([]interface{}{inventoryBranchs}, "inventoryBranchs")
 	inventoryBranchsData := make([]*types.InventoryBranch, len(inventoryBranchs))
 
-	for d, InventoryBranch := range inventoryBranchs {
+	for d, inventoryBranch := range inventoryBranchs {
 		inventoryBranchsData[d] = &types.InventoryBranch{
-			ID:          &InventoryBranch.ID,
-			Name:        &InventoryBranch.Name,
-			Description: InventoryBranch.Description,
-			CreatedBy:   &InventoryBranch.CreatedBy,
-			CreatedAt:   InventoryBranch.CreatedAt.String(),
-			UpdatedBy:   &InventoryBranch.UpdatedBy,
-			UpdatedAt:   InventoryBranch.UpdatedAt.String(),
+			ID:          &inventoryBranch.ID,
+			Name:        &inventoryBranch.Name,
+			Description: inventoryBranch.Description,
+			CreatedBy:   &inventoryBranch.CreatedBy,
+			CreatedAt:   inventoryBranch.CreatedAt.String(),
+			UpdatedBy:   &inventoryBranch.UpdatedBy,
+			UpdatedAt:   inventoryBranch.UpdatedAt.String(),
 		}
 	}
 
