@@ -166,7 +166,7 @@ func GetInventoryBranchs(params *types.ParamsInventoryBranch, userInfo middlewar
 	for d, inventoryBranch := range inventoryBranchs {
 		inventoryBranchsData[d] = &types.InventoryBranch{
 			ID:          &inventoryBranch.ID,
-			Name:        &inventoryBranch.Name,
+			Name:        inventoryBranch.Name,
 			Description: inventoryBranch.Description,
 			CreatedBy:   &inventoryBranch.CreatedBy,
 			CreatedAt:   inventoryBranch.CreatedAt.String(),
@@ -199,7 +199,7 @@ func GetInventoryBranch(id *string) (*types.InventoryBranch, error) {
 
 	inventoryBranchData := types.InventoryBranch{
 		ID:          &inventoryBranch.ID,
-		Name:        &inventoryBranch.Name,
+		Name:        inventoryBranch.Name,
 		Description: inventoryBranch.Description,
 		CreatedBy:   &inventoryBranch.CreatedBy,
 		CreatedAt:   inventoryBranch.CreatedAt.String(),

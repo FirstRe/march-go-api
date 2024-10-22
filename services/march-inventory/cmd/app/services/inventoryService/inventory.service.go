@@ -2,6 +2,7 @@ package inventoryService
 
 import (
 	. "core/app/helper"
+	"core/app/middlewares"
 	"errors"
 	"log"
 	"march-inventory/cmd/app/dto"
@@ -9,6 +10,8 @@ import (
 	"march-inventory/cmd/app/graph/types"
 	"march-inventory/cmd/app/statusCode"
 	gormDb "march-inventory/cmd/app/statusCode/gorm"
+	"math"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -126,39 +129,151 @@ func DeleteInventoryTypes(id string) (*types.MutationInventoryResponse, error) {
 	return &reponseSuccess, nil
 }
 
-func GetInventoryTypess(params *types.ParamsInventoryType) (*types.InventoryTypesResponse, error) {
-	logctx := LogContext(ClassName, "GetInventoryTypes")
-	logctx.Logger([]interface{}{}, "id")
-	inventoryTypes := []model.InventoryType{}
-	searchParam := ""
+func GetInventories(params *types.ParamsInventory, userInfo middlewares.UserClaims) (*types.InventoriesResponse, error) {
+	logctx := LogContext(ClassName, "GetInventories")
+	logctx.Logger(params, "params")
 
+	pageNo := DefaultTo(params.PageNo, 1)
+	limit := DefaultTo(params.Limit, 30)
+	offset := pageNo*limit - limit
+
+	logctx.Logger(offset, "offset")
+	logctx.Logger(pageNo, "pageNo")
+	logctx.Logger(limit, "limit")
+
+	inventories := []model.Inventory{}
+
+	searchParam := ""
+	isSerialNumber := false
 	if params != nil && params.Search != nil {
+		if strings.HasPrefix(*params.Search, "#") {
+			isSerialNumber = true
+		}
 		searchParam = "%" + *params.Search + "%"
 	}
-
 	log.Printf("searchParam: %+v", searchParam)
 
-	if err := gormDb.Repos.Model(&inventoryTypes).Where("name LIKE ?", searchParam).Not("deleted = ?", true).Order("created_at asc").Find(&inventoryTypes).Error; err != nil {
-		logctx.Logger([]interface{}{err}, "err GetInventoryTypes Model Data")
-	}
-	logctx.Logger([]interface{}{inventoryTypes}, "inventoryTypes")
-	inventoryTypesData := make([]*types.InventoryType, len(inventoryTypes))
+	query := gormDb.Repos.Model(&[]model.Inventory{}).Where("deleted = ?", false)
 
-	for d, inventoryType := range inventoryTypes {
-		inventoryTypesData[d] = &types.InventoryType{
-			ID:          &inventoryType.ID,
-			Name:        &inventoryType.Name,
-			Description: inventoryType.Description,
-			CreatedBy:   &inventoryType.CreatedBy,
-			CreatedAt:   inventoryType.CreatedAt.String(),
-			UpdatedBy:   &inventoryType.UpdatedBy,
-			UpdatedAt:   inventoryType.UpdatedAt.String(),
+	if searchParam != "" && !isSerialNumber {
+		query = query.Where("name LIKE ?", searchParam)
+	} else if isSerialNumber {
+		query = query.Where("serial_number LIKE ?", searchParam)
+	}
+
+	if params.Favorite != nil && *params.Favorite == types.FavoriteStatusLike {
+		query = query.Where("favorite = ?", true)
+	}
+
+	if len(params.Type) > 0 {
+		query = query.Where("inventory_type_id IN ?", params.Type).Preload("InventoryType")
+	}
+
+	if len(params.Brand) > 0 {
+		query = query.Where("inventory_brand_id IN ?", params.Brand).Preload("InventoryBrand")
+	}
+
+	if len(params.Branch) > 0 {
+		query = query.Where("inventory_branch_id IN ?", params.Branch).Preload("InventoryBranch")
+	}
+
+	if userInfo.UserInfo.ShopsID == "" || userInfo.UserInfo.UserName == "" {
+		reponseError := types.InventoriesResponse{
+			Status: statusCode.Forbidden("Unauthorized ShopId"),
+			Data:   nil,
+		}
+		return &reponseError, nil
+	}
+
+	query = query.Where("shops_id = ?", userInfo.UserInfo.ShopsID)
+
+	result := query.Order("created_at desc").Limit(limit).Offset(offset).Find(&inventories)
+
+	if result.Error != nil {
+		logctx.Logger([]interface{}{result.Error}, "err GetInventories Model Data")
+		reponseError := types.InventoriesResponse{
+			Status: statusCode.InternalError(""),
+			Data:   nil,
+		}
+		return &reponseError, nil
+	}
+
+	logctx.Logger(inventories, "[log-api] inventories")
+
+	inventoriesData := make([]*types.Inventory, len(inventories))
+
+	for d, inventory := range inventories {
+		inventoryBrand := types.InventoryBrand{
+			ID:          &inventory.InventoryBrand.ID,
+			Name:        inventory.InventoryBrand.Name,
+			Description: inventory.InventoryBrand.Description,
+			CreatedBy:   &inventory.InventoryBrand.CreatedBy,
+			CreatedAt:   inventory.InventoryBrand.CreatedAt.String(),
+			UpdatedBy:   &inventory.InventoryBrand.UpdatedBy,
+			UpdatedAt:   inventory.InventoryBrand.UpdatedAt.String(),
+		}
+
+		inventoryBranch := types.InventoryBranch{
+			ID:          &inventory.InventoryBranch.ID,
+			Name:        inventory.InventoryBranch.Name,
+			Description: inventory.InventoryBranch.Description,
+			CreatedBy:   &inventory.InventoryBranch.CreatedBy,
+			CreatedAt:   inventory.InventoryBranch.CreatedAt.String(),
+			UpdatedBy:   &inventory.InventoryBranch.UpdatedBy,
+			UpdatedAt:   inventory.InventoryBranch.UpdatedAt.String(),
+		}
+
+		inventoryType := types.InventoryType{
+			ID:          &inventory.InventoryType.ID,
+			Name:        inventory.InventoryType.Name,
+			Description: inventory.InventoryType.Description,
+			CreatedBy:   &inventory.InventoryType.CreatedBy,
+			CreatedAt:   inventory.InventoryType.CreatedAt.String(),
+			UpdatedBy:   &inventory.InventoryType.UpdatedBy,
+			UpdatedAt:   inventory.InventoryType.UpdatedAt.String(),
+		}
+
+		inventoriesData[d] = &types.Inventory{
+			ID:              &inventory.ID,
+			Name:            inventory.Name,
+			Description:     inventory.Description,
+			CreatedBy:       &inventory.CreatedBy,
+			CreatedAt:       inventory.CreatedAt.String(),
+			UpdatedBy:       &inventory.UpdatedBy,
+			UpdatedAt:       inventory.UpdatedAt.String(),
+			Amount:          inventory.Amount,
+			Sold:            &inventory.Sold,
+			Sku:             inventory.SKU,
+			SerialNumber:    inventory.SerialNumber,
+			Size:            inventory.Size,
+			PriceMember:     inventory.PriceMember,
+			Price:           inventory.Price,
+			ReorderLevel:    inventory.ReorderLevel,
+			ExpiryDate:      inventory.ExpiryDate.String(),
+			InventoryBrand:  &inventoryBrand,
+			InventoryBranch: &inventoryBranch,
+			InventoryType:   &inventoryType,
+			Favorite:        &inventory.Favorite,
 		}
 	}
+	var count int64
+	if err := query.Find(&inventories).Count(&count).Error; err != nil {
+		count = 0
+	}
+	totalRow := int(count)
+	totalPage := int(math.Ceil(float64(totalRow) / float64(limit)))
 
-	reponsePass := types.InventoryTypesResponse{
+	reponseData := types.ResponseInventories{
+		Inventories: inventoriesData,
+		PageLimit:   params.Limit,
+		TotalRow:    &totalRow,
+		TotalPage:   &totalPage,
+		PageNo:      params.PageNo,
+	}
+
+	reponsePass := types.InventoriesResponse{
 		Status: statusCode.Success("OK"),
-		Data:   inventoryTypesData,
+		Data:   &reponseData,
 	}
 
 	return &reponsePass, nil
@@ -185,7 +300,7 @@ func GetInventoryTypesss(id *string) (*types.InventoryTypeResponse, error) {
 
 	inventoryTypeData := types.InventoryType{
 		ID:          &inventoryType.ID,
-		Name:        &inventoryType.Name,
+		Name:        inventoryType.Name,
 		Description: inventoryType.Description,
 		CreatedBy:   &inventoryType.CreatedBy,
 		CreatedAt:   inventoryType.CreatedAt.String(),

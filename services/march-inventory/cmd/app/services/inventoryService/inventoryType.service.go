@@ -168,7 +168,7 @@ func GetInventoryTypes(params *types.ParamsInventoryType, userInfo middlewares.U
 	for d, inventoryType := range inventoryTypes {
 		inventoryTypesData[d] = &types.InventoryType{
 			ID:          &inventoryType.ID,
-			Name:        &inventoryType.Name,
+			Name:        inventoryType.Name,
 			Description: inventoryType.Description,
 			CreatedBy:   &inventoryType.CreatedBy,
 			CreatedAt:   inventoryType.CreatedAt.String(),
@@ -207,7 +207,7 @@ func GetInventoryType(id *string) (*types.InventoryTypeResponse, error) {
 
 	inventoryTypeData := types.InventoryType{
 		ID:          &inventoryType.ID,
-		Name:        &inventoryType.Name,
+		Name:        inventoryType.Name,
 		Description: inventoryType.Description,
 		CreatedBy:   &inventoryType.CreatedBy,
 		CreatedAt:   inventoryType.CreatedAt.String(),

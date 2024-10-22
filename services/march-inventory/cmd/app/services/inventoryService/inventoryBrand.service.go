@@ -166,7 +166,7 @@ func GetInventoryBrands(params *types.ParamsInventoryBrand, userInfo middlewares
 	for d, inventoryBrand := range inventoryBrands {
 		inventoryBrandsData[d] = &types.InventoryBrand{
 			ID:          &inventoryBrand.ID,
-			Name:        &inventoryBrand.Name,
+			Name:        inventoryBrand.Name,
 			Description: inventoryBrand.Description,
 			CreatedBy:   &inventoryBrand.CreatedBy,
 			CreatedAt:   inventoryBrand.CreatedAt.String(),
@@ -200,7 +200,7 @@ func GetInventoryBrand(id *string) (*types.InventoryBrand, error) {
 
 	inventoryBrandData := types.InventoryBrand{
 		ID:          &inventoryBrand.ID,
-		Name:        &inventoryBrand.Name,
+		Name:        inventoryBrand.Name,
 		Description: inventoryBrand.Description,
 		CreatedBy:   &inventoryBrand.CreatedBy,
 		CreatedAt:   inventoryBrand.CreatedAt.String(),

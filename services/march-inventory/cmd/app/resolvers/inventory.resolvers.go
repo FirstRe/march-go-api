@@ -61,7 +61,10 @@ func (r *queryResolver) GetInventory(ctx context.Context, id *string) (*types.In
 
 // GetInventories is the resolver for the getInventories field.
 func (r *queryResolver) GetInventories(ctx context.Context, params *types.ParamsInventory) (*types.InventoriesResponse, error) {
-	panic(fmt.Errorf("not implemented: GetInventories - getInventories"))
+	logctx := helper.LogContext(ClassName, "GetInventories")
+	userInfo := middlewares.UserInfo(ctx)
+	logctx.Logger(userInfo, "userInfo")
+	return inventoryService.GetInventories(params, userInfo)
 }
 
 // GetInventoryAllDeleted is the resolver for the getInventoryAllDeleted field.

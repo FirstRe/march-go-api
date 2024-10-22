@@ -15,8 +15,8 @@ import (
 )
 
 // Resolve the posts field in Author
-func (r *inventoryTypeResolver) Posts(ctx context.Context, InventoryType *types.InventoryType) ([]*types.Post, error) {
-	log.Printf("testResolve: %+v", InventoryType.ID)
+func (r *inventoryTypeResolver) Posts(ctx context.Context, obj *types.InventoryType) ([]*types.Post, error) {
+	log.Printf("testResolve: %+v", "InventoryType.ID")
 
 	id := "1"
 	name := "first"

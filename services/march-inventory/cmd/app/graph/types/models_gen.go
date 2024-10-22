@@ -80,7 +80,7 @@ type Inventory struct {
 
 type InventoryBranch struct {
 	ID          *string `json:"id,omitempty"`
-	Name        *string `json:"name,omitempty"`
+	Name        string  `json:"name"`
 	Description *string `json:"description,omitempty"`
 	CreatedBy   *string `json:"createdBy,omitempty"`
 	UpdatedBy   *string `json:"updatedBy,omitempty"`
@@ -95,7 +95,7 @@ type InventoryBranchsDataResponse struct {
 
 type InventoryBrand struct {
 	ID          *string `json:"id,omitempty"`
-	Name        *string `json:"name,omitempty"`
+	Name        string  `json:"name"`
 	Description *string `json:"description,omitempty"`
 	CreatedBy   *string `json:"createdBy,omitempty"`
 	UpdatedBy   *string `json:"updatedBy,omitempty"`
@@ -125,7 +125,7 @@ type InventoryNameResponse struct {
 
 type InventoryType struct {
 	ID          *string `json:"id,omitempty"`
-	Name        *string `json:"name,omitempty"`
+	Name        string  `json:"name"`
 	Description *string `json:"description,omitempty"`
 	CreatedBy   *string `json:"createdBy,omitempty"`
 	UpdatedBy   *string `json:"updatedBy,omitempty"`

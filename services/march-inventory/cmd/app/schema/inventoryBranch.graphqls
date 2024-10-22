@@ -1,6 +1,6 @@
 type InventoryBranch {
   id: String
-  name: String
+  name: String!
   description: String
   createdBy: String
   updatedBy: String

@@ -1633,7 +1633,7 @@ extend type Mutation {
 `, BuiltIn: false},
 	{Name: "../../schema/inventoryBranch.graphqls", Input: `type InventoryBranch {
   id: String
-  name: String
+  name: String!
   description: String
   createdBy: String
   updatedBy: String
@@ -1686,7 +1686,7 @@ extend type Mutation {
 `, BuiltIn: false},
 	{Name: "../../schema/inventoryBrand.graphqls", Input: `type InventoryBrand {
   id: String
-  name: String
+  name: String!
   description: String
   createdBy: String
   updatedBy: String
@@ -1739,7 +1739,7 @@ type Mutation {
 `, BuiltIn: false},
 	{Name: "../../schema/inventoryType.graphqls", Input: `type InventoryType {
   id: String
-  name: String
+  name: String!
   description: String
   createdBy: String
   updatedBy: String
@@ -4176,11 +4176,14 @@ func (ec *executionContext) _InventoryBranch_name(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_InventoryBranch_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4573,11 +4576,14 @@ func (ec *executionContext) _InventoryBrand_name(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_InventoryBrand_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5278,11 +5284,14 @@ func (ec *executionContext) _InventoryType_name(ctx context.Context, field graph
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_InventoryType_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11622,6 +11631,9 @@ func (ec *executionContext) _InventoryBranch(ctx context.Context, sel ast.Select
 			out.Values[i] = ec._InventoryBranch_id(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._InventoryBranch_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "description":
 			out.Values[i] = ec._InventoryBranch_description(ctx, field, obj)
 		case "createdBy":
@@ -11714,6 +11726,9 @@ func (ec *executionContext) _InventoryBrand(ctx context.Context, sel ast.Selecti
 			out.Values[i] = ec._InventoryBrand_id(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._InventoryBrand_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "description":
 			out.Values[i] = ec._InventoryBrand_description(ctx, field, obj)
 		case "createdBy":
@@ -11920,6 +11935,9 @@ func (ec *executionContext) _InventoryType(ctx context.Context, sel ast.Selectio
 			out.Values[i] = ec._InventoryType_id(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._InventoryType_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "description":
 			out.Values[i] = ec._InventoryType_description(ctx, field, obj)
 		case "createdBy":
