@@ -279,39 +279,26 @@ func GetInventories(params *types.ParamsInventory, userInfo middlewares.UserClai
 	return &reponsePass, nil
 }
 
-func GetInventoryTypesss(id *string) (*types.InventoryTypeResponse, error) {
-	logctx := LogContext(ClassName, "GetInventoryType")
-	logctx.Logger([]interface{}{id}, "id")
-	inventoryType := model.InventoryType{}
-	if err := gormDb.Repos.Model(&inventoryType).Where("id = ?", id).First(&inventoryType).Error; err != nil {
-		logctx.Logger([]interface{}{err}, "err GetInventoryType Model Data")
-		message := "Internal Error"
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			message = "Not Found"
-		}
+func GetInventoryNames(userInfo middlewares.UserClaims) (*types.InventoryNameResponse, error) {
+	logctx := LogContext(ClassName, "GetInventories")
 
-		reponseError := types.InventoryTypeResponse{
-			Status: statusCode.BadRequest(message),
-			Data:   nil,
-		}
-		return &reponseError, nil
-	}
-	logctx.Logger([]interface{}{inventoryType}, "inventoryType")
+	inventories := []model.Inventory{}
+	gormDb.Repos.Where("shops_id = ?", userInfo.UserInfo.ShopsID).Find(&inventories).Select("id", "name")
 
-	inventoryTypeData := types.InventoryType{
-		ID:          &inventoryType.ID,
-		Name:        inventoryType.Name,
-		Description: inventoryType.Description,
-		CreatedBy:   &inventoryType.CreatedBy,
-		CreatedAt:   inventoryType.CreatedAt.String(),
-		UpdatedBy:   &inventoryType.UpdatedBy,
-		UpdatedAt:   inventoryType.UpdatedAt.String(),
+	logctx.Logger(inventories, "inventories")
+	inventoryName := make([]*types.InventoryName, len(inventories))
+
+	for d, inventory := range inventories {
+		inventoryName[d] = &types.InventoryName{
+			ID:   &inventory.ID,
+			Name: &inventory.Name,
+		}
 	}
 
-	reponsePass := types.InventoryTypeResponse{
+	reponseSuccess := types.InventoryNameResponse{
 		Status: statusCode.Success("OK"),
-		Data:   &inventoryTypeData,
+		Data:   inventoryName,
 	}
+	return &reponseSuccess, nil
 
-	return &reponsePass, nil
 }

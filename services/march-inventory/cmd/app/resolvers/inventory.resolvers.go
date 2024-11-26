@@ -47,7 +47,10 @@ func (r *mutationResolver) RecoveryHardDeleted(ctx context.Context, input types.
 
 // GetInventoryNames is the resolver for the getInventoryNames field.
 func (r *queryResolver) GetInventoryNames(ctx context.Context) (*types.InventoryNameResponse, error) {
-	panic(fmt.Errorf("not implemented: GetInventoryNames - getInventoryNames"))
+	logctx := helper.LogContext(ClassName, "GetInventories")
+	userInfo := middlewares.UserInfo(ctx)
+	logctx.Logger(userInfo, "userInfo")
+	return inventoryService.GetInventoryNames(userInfo)
 }
 
 // GetInventory is the resolver for the getInventory field.
