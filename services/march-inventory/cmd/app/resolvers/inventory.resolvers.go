@@ -9,7 +9,6 @@ import (
 	"core/app/helper"
 	"core/app/middlewares"
 	"fmt"
-	"log"
 	"march-inventory/cmd/app/graph/types"
 	"march-inventory/cmd/app/services/inventoryService"
 )
@@ -23,8 +22,7 @@ func (r *mutationResolver) UploadInventory(ctx context.Context, input types.Uplo
 func (r *mutationResolver) UpsertInventory(ctx context.Context, input types.UpsertInventoryInput) (*types.MutationInventoryResponse, error) {
 	logctx := helper.LogContext(ClassName, "UpsertInventory")
 	userInfo := middlewares.UserInfo(ctx)
-	logctx.Logger([]interface{}{}, "")
-	log.Printf("userInfo: %+v", userInfo)
+	logctx.Logger(userInfo, "userInfo")
 
 	return inventoryService.UpsertInventory(input, userInfo)
 }
@@ -33,20 +31,27 @@ func (r *mutationResolver) UpsertInventory(ctx context.Context, input types.Upse
 func (r *mutationResolver) DeleteInventory(ctx context.Context, id string) (*types.MutationInventoryResponse, error) {
 	logctx := helper.LogContext(ClassName, "DeleteInventory")
 	userInfo := middlewares.UserInfo(ctx)
-	logctx.Logger([]interface{}{}, "")
-	log.Printf("userInfo: %+v", userInfo)
+	logctx.Logger(userInfo, "userInfo")
 
 	return inventoryService.DeleteInventory(id, userInfo)
 }
 
 // FavoriteInventory is the resolver for the favoriteInventory field.
 func (r *mutationResolver) FavoriteInventory(ctx context.Context, id string) (*types.MutationInventoryResponse, error) {
-	panic(fmt.Errorf("not implemented: FavoriteInventory - favoriteInventory"))
+	logctx := helper.LogContext(ClassName, "FavoriteInventory")
+	userInfo := middlewares.UserInfo(ctx)
+	logctx.Logger(userInfo, "userInfo")
+
+	return inventoryService.FavoriteInventory(id, userInfo)
 }
 
 // RecoveryHardDeleted is the resolver for the recoveryHardDeleted field.
 func (r *mutationResolver) RecoveryHardDeleted(ctx context.Context, input types.RecoveryHardDeletedInput) (*types.RecoveryHardDeletedResponse, error) {
-	panic(fmt.Errorf("not implemented: RecoveryHardDeleted - recoveryHardDeleted"))
+	logctx := helper.LogContext(ClassName, "RecoveryHardDeleted")
+	userInfo := middlewares.UserInfo(ctx)
+	logctx.Logger(userInfo, "userInfo")
+
+	return inventoryService.RecoveryHardDeleted(input, userInfo)
 }
 
 // GetInventoryNames is the resolver for the getInventoryNames field.

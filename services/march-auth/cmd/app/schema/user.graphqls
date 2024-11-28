@@ -10,7 +10,7 @@ scalar DateTime
 
 type Status {
   message: String
-  code: Int
+  code: Int!
 }
 
 type User {

@@ -6,6 +6,7 @@ toolchain go1.22.1
 
 require (
 	github.com/99designs/gqlgen v0.17.44
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.9.1
 	github.com/joho/godotenv v1.5.1

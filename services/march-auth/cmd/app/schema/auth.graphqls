@@ -14,8 +14,9 @@ type VerifyAccessTokenResponse {
 }
 
 extend type Mutation {
-  tokenExpire(refreshToken: String!): Token
-  signOut(id: String!): SignOutResponse
+  tokenExpire(refreshToken: String!): Token @auth(scopes: ["AnyAdminScope"])
+  signOut(id: String!): SignOutResponse @auth(scopes: ["AnyAdminScope"])
   verifyAccessToken(token: String!): VerifyAccessTokenResponse
+    @auth(scopes: ["AnyAdminScope"])
   signInOAuth(code: String!): Token
 }

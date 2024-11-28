@@ -4,7 +4,8 @@ import (
 	"fmt"
 	// "log"
 
-	"march-auth/cmd/app/common"
+	"march-auth/cmd/app/common/statusCode"
+
 	// gormDb "march-auth/cmd/app/common/gorm"
 	// "march-auth/cmd/app/graph/model"
 	"march-auth/cmd/app/graph/types"
@@ -65,7 +66,7 @@ func CreateUser(input *types.UserInputParams) (*types.ResponseCreateUser, error)
 	// return &response, nil
 
 	reponseError := types.ResponseCreateUser{
-		Status: common.StatusResponse(500, ""),
+		Status: statusCode.Success("OK"),
 		Data:   nil,
 	}
 	return &reponseError, nil
@@ -130,7 +131,7 @@ func Login(input *types.LoginInputParams) (*types.ResponseLogin, error) {
 	// return &reponseData, nil
 
 	reponseError := types.ResponseLogin{
-		Status: common.StatusResponse(500, ""),
+		Status: statusCode.Success("OK"),
 		Data:   nil,
 	}
 	return &reponseError, nil

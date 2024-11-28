@@ -32,7 +32,7 @@ func DiviceId(c *gin.Context) {
 
 	actualToken := strings.TrimSpace(tokenSplit[1])
 
-	validate, err := jwts.JwtValidate(actualToken)
+	validate, err := jwts.Verify(actualToken)
 
 	if err != nil || !validate.Valid {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -40,7 +40,7 @@ func DiviceId(c *gin.Context) {
 		return
 	}
 
-	userInfo, err := jwts.VerifyJWT(actualToken)
+	userInfo, err := jwts.Decode(actualToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		c.Abort()

@@ -5,11 +5,11 @@ import (
 	"core/app/middlewares"
 	"errors"
 	"log"
+	gormDb "march-inventory/cmd/app/common/gorm"
+	"march-inventory/cmd/app/common/statusCode"
 	"march-inventory/cmd/app/graph/model"
 	"march-inventory/cmd/app/graph/types"
 	translation "march-inventory/cmd/app/i18n"
-	"march-inventory/cmd/app/statusCode"
-	gormDb "march-inventory/cmd/app/statusCode/gorm"
 
 	"gorm.io/gorm"
 )
@@ -100,7 +100,7 @@ func DeleteInventoryType(id string, userInfo middlewares.UserClaims) (*types.Mut
 			}
 			return &reponseError, nil
 		}
-		logctx.Logger(err, "[error-api] fetching InventoryType")
+		logctx.Logger(err.Error(), "[error-api] fetching InventoryType")
 
 		reponseError := types.MutationInventoryResponse{
 			Status: statusCode.InternalError(""),

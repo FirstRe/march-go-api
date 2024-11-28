@@ -128,7 +128,7 @@ func VerifyAccessToken(token string) (*types.VerifyAccessTokenResponse, error) {
 	logctx := helper.LogContext(ClassNameAuth, "VerifyAccessToken")
 
 	pass := true
-	validate, err := jwts.JwtValidate(token)
+	validate, err := jwts.Verify(token)
 
 	if err != nil || !validate.Valid {
 		pass = false
@@ -140,6 +140,64 @@ func VerifyAccessToken(token string) (*types.VerifyAccessTokenResponse, error) {
 
 	logctx.Logger(pass, "isPass")
 	return &response, nil
+}
+
+func SignOut(id string) (*types.SignOutResponse, error) {
+	logctx := helper.LogContext(ClassNameAuth, "SignOut")
+
+	user := &model.User{}
+	if err := gormDb.Repos.
+		Where("id = ?", id).Model(user).
+		Updates(map[string]interface{}{"refresh_token": nil, "device_id": nil}).
+		Error; err != nil {
+		logctx.Logger(err.Error(), "[error-api] SignOut")
+		return nil, fmt.Errorf("Internal Server Error: %v", err)
+	}
+	logctx.Logger(user, "user")
+	return &types.SignOutResponse{
+		ID: id,
+	}, nil
+}
+
+func TokenExpire(refreshToken string) (*types.Token, error) {
+	logctx := helper.LogContext(ClassNameAuth, "TokenExpire")
+	logctx.Logger(refreshToken, "refreshToken")
+
+	verify, err := jwts.Verify(refreshToken, true)
+
+	if err != nil || !verify.Valid {
+		logctx.Logger(nil, "[log-err] InValid")
+		return nil, fmt.Errorf("Unauthorized")
+	}
+
+	decode, err := jwts.DecodeRefresh(refreshToken)
+
+	if err != nil {
+		logctx.Logger(nil, "[log-err] decode")
+		return nil, fmt.Errorf("Unauthorized")
+	}
+
+	user := &model.User{}
+	gormDb.Repos.Model(&model.User{}).
+		Preload(clause.Associations).
+		Preload("Group.GroupFunctions").
+		Preload("Group.GroupFunctions.Function").
+		Preload("Group.GroupTasks").
+		Preload("Group.GroupTasks.Task").
+		Preload("Group.Shop").
+		Where("id = ?", decode.ID).Find(user)
+
+
+	if user.RefreshToken != nil && refreshToken != *user.RefreshToken || *user.DeviceID != decode.DeviceId {
+		gormDb.Repos.Model(&model.User{}).Where("id = ?", user.ID).Update("device_id", nil)
+		return nil, fmt.Errorf("Unauthorized")
+	}
+
+	token := genAccessToken(decode.DeviceId, user)
+
+	return &types.Token{
+		AccessToken: token,
+	}, nil
 }
 
 func revokeToken(accessToken, refreshToken string) {
@@ -173,9 +231,36 @@ func revokeToken(accessToken, refreshToken string) {
 func genToken(user *model.User) (*types.Token, error) {
 	logctx := helper.LogContext(ClassNameAuth, "genToken")
 	deviceId := uuid.New().String()
-	page := addPage(user.Group.GroupFunctions)
-	logctx.Logger([]interface{}{page, deviceId}, "page")
 
+	logctx.Logger(deviceId, "deviceId")
+	token := genAccessToken(deviceId, user)
+
+	jwtRefData := &jwts.JwtCustomClaimRef{
+		ID:       user.ID,
+		DeviceId: deviceId,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 24 * 7 * 4).Unix(),
+			IssuedAt:  time.Now().Unix(),
+		},
+	}
+
+	refresh_token, _ := jwts.JwtGenerateRef(jwtRefData)
+	//update deviceId refreshToken
+
+	gormDb.Repos.Where("id = ?", user.ID).Updates(&model.User{RefreshToken: &refresh_token, DeviceID: &deviceId})
+
+	reponse := types.Token{
+		AccessToken:  token,
+		RefreshToken: &refresh_token,
+		Username:     &user.Username,
+		UserID:       &user.ID,
+	}
+	return &reponse, nil
+}
+
+func genAccessToken(deviceId string, user *model.User) string {
+	logctx := helper.LogContext(ClassNameAuth, "genAccessToken")
+	page := addPage(user.Group.GroupFunctions)
 	Role := strings.ToUpper(strings.Split(user.Group.Name, "|")[0])
 	var tasks []string
 
@@ -211,28 +296,7 @@ func genToken(user *model.User) (*types.Token, error) {
 
 	token, _ := jwts.JwtGenerateAcc(jwtData)
 	logctx.Logger(token, "token")
-
-	jwtRefData := &jwts.JwtCustomClaimRef{
-		ID:       user.ID,
-		DeviceId: deviceId,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 24 * 7 * 4).Unix(),
-			IssuedAt:  time.Now().Unix(),
-		},
-	}
-
-	refresh_token, _ := jwts.JwtGenerateRef(jwtRefData)
-	//update deviceId refreshToken
-
-	gormDb.Repos.Where("id = ?", user.ID).Updates(&model.User{RefreshToken: &refresh_token, DeviceID: &deviceId})
-
-	reponse := types.Token{
-		AccessToken:  token,
-		RefreshToken: &refresh_token,
-		Username:     &user.Username,
-		UserID:       &user.ID,
-	}
-	return &reponse, nil
+	return token
 }
 
 func addPage(groupFunctions []model.GroupFunction) map[string][]string {

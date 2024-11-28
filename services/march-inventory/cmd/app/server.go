@@ -5,11 +5,11 @@ import (
 	"core/app/auth"
 	"core/app/middlewares"
 	"log"
+	gormDb "march-inventory/cmd/app/common/gorm"
 	graph "march-inventory/cmd/app/graph/generated"
 	"march-inventory/cmd/app/graph/model"
 	translation "march-inventory/cmd/app/i18n"
 	"march-inventory/cmd/app/resolvers"
-	gormDb "march-inventory/cmd/app/statusCode/gorm"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"

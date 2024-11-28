@@ -50,12 +50,12 @@ func AuthMiddleware() gin.HandlerFunc {
 			gqlErr = append(gqlErr, *gqlerror.Errorf("Unauthorized"))
 		}
 
-		validate, err := jwt.JwtValidate(auth)
+		validate, err := jwt.Verify(auth)
 		if err != nil || !validate.Valid {
 			gqlErr = append(gqlErr, *gqlerror.Errorf("Unauthorized"))
 		}
 
-		userInfo, err := jwt.VerifyJWT(auth)
+		userInfo, err := jwt.Decode(auth)
 		if err != nil {
 			gqlErr = append(gqlErr, *gqlerror.Errorf("Unauthorized"))
 		}

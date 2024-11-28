@@ -8,7 +8,7 @@ import (
 	"context"
 	"core/app/helper"
 	"fmt"
-	"march-auth/cmd/app/common"
+	"march-auth/cmd/app/common/statusCode"
 	graph "march-auth/cmd/app/graph/generated"
 	"march-auth/cmd/app/graph/types"
 	userService "march-auth/cmd/app/services/user"
@@ -36,7 +36,7 @@ func (r *queryResolver) Test(ctx context.Context) (*types.Status, error) {
 	logctx := helper.LogContext(ClassName, "Test")
 	logctx.Logger([]interface{}{}, "")
 
-	response := common.StatusResponse(200, "")
+	response := statusCode.Success("ok")
 
 	return response, nil
 }

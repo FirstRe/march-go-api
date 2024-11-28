@@ -68,7 +68,7 @@ func JwtGenerateAcc(jwts *JwtCustomClaim) (string, error) {
 func JwtGenerateRef(jwts *JwtCustomClaimRef) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwts)
 
-	token, err := t.SignedString(jwtSecret)
+	token, err := t.SignedString(jwtSecretRef)
 	if err != nil {
 		return "", err
 	}
@@ -76,16 +76,43 @@ func JwtGenerateRef(jwts *JwtCustomClaimRef) (string, error) {
 	return token, nil
 }
 
-func JwtValidate(token string) (*jwt.Token, error) {
+func Verify(token string, isRefresh ...bool) (*jwt.Token, error) {
+	isRefreshNew := false
+
+	if len(isRefresh) > 0 {
+		isRefreshNew = isRefresh[0]
+	}
+
 	return jwt.ParseWithClaims(token, &JwtCustomClaim{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("there's a problem with the signing method")
+		}
+		if isRefreshNew {
+			return jwtSecretRef, nil
 		}
 		return jwtSecret, nil
 	})
 }
 
-func VerifyJWT(tokens string) (*JwtCustomClaim, error) {
+func DecodeRefresh(tokens string) (*JwtCustomClaimRef, error) {
+	token, err := jwt.Parse(tokens, nil)
+
+	if token == nil {
+		return nil, err
+	}
+
+	claims, _ := token.Claims.(jwt.MapClaims)
+	id, _ := claims["id"].(string)
+	deviceId, _ := claims["deviceId"].(string)
+
+	return &JwtCustomClaimRef{
+		ID:       id,
+		DeviceId: deviceId,
+	}, nil
+
+}
+
+func Decode(tokens string) (*JwtCustomClaim, error) {
 	// logctx := helper.LogContext("JWT", "VerifyJWT")
 
 	token, err := jwt.Parse(tokens, nil)

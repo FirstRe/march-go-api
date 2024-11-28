@@ -6,12 +6,12 @@ import (
 	"core/app/middlewares"
 	"errors"
 	"log"
+	gormDb "march-inventory/cmd/app/common/gorm"
+	"march-inventory/cmd/app/common/statusCode"
 	"march-inventory/cmd/app/dto"
 	"march-inventory/cmd/app/graph/model"
 	"march-inventory/cmd/app/graph/types"
 	translation "march-inventory/cmd/app/i18n"
-	"march-inventory/cmd/app/statusCode"
-	gormDb "march-inventory/cmd/app/statusCode/gorm"
 	"math"
 	"strings"
 
@@ -519,7 +519,7 @@ func DeleteInventory(id string, userInfo middlewares.UserClaims) (*types.Mutatio
 	if err := gormDb.Repos.Model(&inventory).Update("deleted", true).Error; err != nil {
 		logctx.Logger(id, "[error-api] deleting Inventory")
 		reponseError := types.MutationInventoryResponse{
-			Status: statusCode.InternalError("Error deleting inventory inventory"),
+			Status: statusCode.InternalError("Error deleting inventory"),
 			Data:   nil,
 		}
 		return &reponseError, err
@@ -531,4 +531,173 @@ func DeleteInventory(id string, userInfo middlewares.UserClaims) (*types.Mutatio
 		return &reponseSuccess, nil
 	}
 
+}
+
+func FavoriteInventory(id string, userInfo middlewares.UserClaims) (*types.MutationInventoryResponse, error) {
+	logctx := helper.LogContext(ClassName, "FavoriteInventory")
+	logctx.Logger(id, "id")
+	inventory := &model.Inventory{}
+	gormDb.Repos.Where("id = ?", id).First(inventory)
+
+	if inventory.ShopsID != userInfo.UserInfo.ShopsID || inventory.ID == "" {
+		reponseError := types.MutationInventoryResponse{
+			Status: statusCode.BadRequest("Unauthorized ShopId"),
+			Data:   nil,
+		}
+		return &reponseError, nil
+	}
+
+	if err := gormDb.Repos.Model(&model.Inventory{}).Where("id = ?", inventory.ID).Update("favorite", !inventory.Favorite).Error; err != nil {
+		logctx.Logger(err.Error(), "[error-api] favorite Inventory")
+		reponseError := types.MutationInventoryResponse{
+			Status: statusCode.InternalError("Error favorite inventory"),
+			Data:   nil,
+		}
+		return &reponseError, err
+	} else {
+		reponseSuccess := types.MutationInventoryResponse{
+			Status: statusCode.Success(translation.LocalizeMessage("Success.inventory")),
+			Data: &types.ResponseID{
+				ID: &inventory.ID,
+			},
+		}
+		return &reponseSuccess, nil
+	}
+}
+
+func RecoveryHardDeleted(input types.RecoveryHardDeletedInput, userInfo middlewares.UserClaims) (*types.RecoveryHardDeletedResponse, error) {
+	logctx := helper.LogContext(ClassName, "RecoveryHardDeleted")
+	logctx.Logger(input, "input")
+
+	switch input.Type {
+	case types.DeletedTypeInventory:
+		{
+			checkIn := &model.Inventory{}
+			if err := gormDb.Repos.Where("id = ?", input.ID).First(checkIn).Error; err != nil {
+				logctx.Logger(err.Error(), "[error-api] Recovery Hard Deleted")
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.InternalError("Error Recovery Hard Deleted"),
+					Data:   nil,
+				}
+				return &reponseError, err
+			}
+			logctx.Logger(checkIn, "checkIn")
+
+			if checkIn.ShopsID != userInfo.UserInfo.ShopsID || checkIn.Deleted == false {
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.BadRequest("Unauthorized ShopId"),
+					Data:   nil,
+				}
+				return &reponseError, nil
+			}
+			return subRecovery(checkIn, input, userInfo)
+		}
+	case types.DeletedTypeInventoryBranch:
+		{
+			checkIn := &model.InventoryBranch{}
+			if err := gormDb.Repos.Where("id = ?", input.ID).First(checkIn).Error; err != nil {
+				logctx.Logger(err.Error(), "[error-api] Recovery Hard Deleted")
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.InternalError("Error Recovery Hard Deleted"),
+					Data:   nil,
+				}
+				return &reponseError, err
+			}
+			logctx.Logger(checkIn, "checkIn")
+
+			if checkIn.ShopsID != userInfo.UserInfo.ShopsID || checkIn.Deleted == false {
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.BadRequest("Unauthorized ShopId"),
+					Data:   nil,
+				}
+				return &reponseError, nil
+			}
+			return subRecovery(checkIn, input, userInfo)
+		}
+	case types.DeletedTypeInventoryBrand:
+		{
+			checkIn := &model.InventoryBrand{}
+			if err := gormDb.Repos.Where("id = ?", input.ID).First(checkIn).Error; err != nil {
+				logctx.Logger(err.Error(), "[error-api] Recovery Hard Deleted")
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.InternalError("Error Recovery Hard Deleted"),
+					Data:   nil,
+				}
+				return &reponseError, err
+			}
+			logctx.Logger(checkIn, "checkIn")
+
+			if checkIn.ShopsID != userInfo.UserInfo.ShopsID || checkIn.Deleted == false {
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.BadRequest("Unauthorized ShopId"),
+					Data:   nil,
+				}
+				return &reponseError, nil
+			}
+			return subRecovery(checkIn, input, userInfo)
+		}
+	default:
+		checkIn := &model.InventoryType{}
+		if err := gormDb.Repos.Where("id = ?", input.ID).First(checkIn).Error; err != nil {
+			logctx.Logger(err.Error(), "[error-api] Recovery Hard Deleted")
+			reponseError := types.RecoveryHardDeletedResponse{
+				Status: statusCode.InternalError("Error Recovery Hard Deleted"),
+				Data:   nil,
+			}
+			return &reponseError, err
+		}
+		logctx.Logger(checkIn, "checkIn")
+
+		if checkIn.ShopsID != userInfo.UserInfo.ShopsID || checkIn.Deleted == false {
+			reponseError := types.RecoveryHardDeletedResponse{
+				Status: statusCode.BadRequest("Unauthorized ShopId"),
+				Data:   nil,
+			}
+			return &reponseError, nil
+		}
+		return subRecovery(checkIn, input, userInfo)
+	}
+}
+
+func subRecovery[T *model.InventoryBranch | *model.InventoryBrand | *model.Inventory | *model.InventoryType](checkIn T, input types.RecoveryHardDeletedInput, userInfo middlewares.UserClaims) (*types.RecoveryHardDeletedResponse, error) {
+	logctx := helper.LogContext(ClassName, "RecoveryHardDeletedSub")
+
+	switch input.Mode {
+	case types.DeletedModeDelete:
+		{
+			if err := gormDb.Repos.Where("id = ?", input.ID).Delete(checkIn).Error; err != nil {
+				logctx.Logger(err.Error(), "[error-api] Recovery Hard Deleted checkIn")
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.InternalError("Error Recovery Hard Deleted checkIn"),
+					Data:   nil,
+				}
+				return &reponseError, err
+			}
+
+			response := types.RecoveryHardDeletedResponse{
+				Status: statusCode.Success(translation.LocalizeMessage("Success.trash.delete")),
+				Data:   nil,
+			}
+
+			return &response, nil
+		}
+	default:
+		{
+			if err := gormDb.Repos.Model(&checkIn).Where("id = ?", input.ID).Updates(map[string]interface{}{"deleted": false, "updated_by": userInfo.UserInfo.UserName}).Error; err != nil {
+				logctx.Logger(err.Error(), "[error-api] Recovery Hard Deleted checkIn")
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.InternalError("Error Recovery Hard Deleted checkIn"),
+					Data:   nil,
+				}
+				return &reponseError, err
+			}
+
+			response := types.RecoveryHardDeletedResponse{
+				Status: statusCode.Success(translation.LocalizeMessage("Success.trash.recovery")),
+				Data:   nil,
+			}
+
+			return &response, nil
+		}
+	}
 }

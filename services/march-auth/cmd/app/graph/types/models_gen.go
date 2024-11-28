@@ -38,7 +38,7 @@ type SignOutResponse struct {
 
 type Status struct {
 	Message *string `json:"message,omitempty"`
-	Code    *int    `json:"code,omitempty"`
+	Code    int     `json:"code"`
 }
 
 type Token struct {

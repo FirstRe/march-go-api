@@ -508,9 +508,10 @@ type VerifyAccessTokenResponse {
 }
 
 extend type Mutation {
-  tokenExpire(refreshToken: String!): Token
-  signOut(id: String!): SignOutResponse
+  tokenExpire(refreshToken: String!): Token @auth(scopes: ["AnyAdminScope"])
+  signOut(id: String!): SignOutResponse @auth(scopes: ["AnyAdminScope"])
   verifyAccessToken(token: String!): VerifyAccessTokenResponse
+    @auth(scopes: ["AnyAdminScope"])
   signInOAuth(code: String!): Token
 }
 `, BuiltIn: false},
@@ -532,7 +533,7 @@ scalar DateTime
 
 type Status {
   message: String
-  code: Int
+  code: Int!
 }
 
 type User {
@@ -878,8 +879,32 @@ func (ec *executionContext) _Mutation_tokenExpire(ctx context.Context, field gra
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().TokenExpire(rctx, fc.Args["refreshToken"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().TokenExpire(rctx, fc.Args["refreshToken"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"AnyAdminScope"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.Token); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-auth/cmd/app/graph/types.Token`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -940,8 +965,32 @@ func (ec *executionContext) _Mutation_signOut(ctx context.Context, field graphql
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SignOut(rctx, fc.Args["id"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().SignOut(rctx, fc.Args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"AnyAdminScope"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.SignOutResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-auth/cmd/app/graph/types.SignOutResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -996,8 +1045,32 @@ func (ec *executionContext) _Mutation_verifyAccessToken(ctx context.Context, fie
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().VerifyAccessToken(rctx, fc.Args["token"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().VerifyAccessToken(rctx, fc.Args["token"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"AnyAdminScope"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, scopes)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.VerifyAccessTokenResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *march-auth/cmd/app/graph/types.VerifyAccessTokenResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1878,11 +1951,14 @@ func (ec *executionContext) _Status_code(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Status_code(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4566,6 +4642,9 @@ func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Status_message(ctx, field, obj)
 		case "code":
 			out.Values[i] = ec._Status_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5100,6 +5179,21 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNLoginInputParams2marchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐLoginInputParams(ctx context.Context, v interface{}) (types.LoginInputParams, error) {
 	res, err := ec.unmarshalInputLoginInputParams(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5401,22 +5495,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	res := graphql.MarshalBoolean(*v)
-	return res
-}
-
-func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalInt(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalInt(*v)
 	return res
 }
 
