@@ -1,15 +1,63 @@
 package uam
 
 import (
+	jwts "core/app/common/jwt"
+	"core/app/helper"
+	gormDb "march-auth/cmd/app/common/gorm"
+	"march-auth/cmd/app/graph/model"
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 )
 
 func DiviceId(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"deviceId": "26f3fdb4-b475-496b-8d6b-0fc26b252d35",
+	logctx := helper.LogContext("UAMSERVICE", "DiviceId")
+
+	token := c.GetHeader("Authorization")
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		c.Abort()
+		return
+	}
+
+	tokenSplit := strings.Split(token, "Bearer ")
+	logctx.Logger(tokenSplit, "tokenSplit")
+
+	if len(tokenSplit) != 2 || strings.TrimSpace(tokenSplit[1]) == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
+		c.Abort()
+		return
+	}
+
+	actualToken := strings.TrimSpace(tokenSplit[1])
+
+	validate, err := jwts.JwtValidate(actualToken)
+
+	if err != nil || !validate.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		c.Abort()
+		return
+	}
+
+	userInfo, err := jwts.VerifyJWT(actualToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		c.Abort()
+		return
+	}
+
+	user := &model.User{}
+	gormDb.Repos.Where("id = ?", userInfo.UserId).Find(user)
+
+	if user.ID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		c.Abort()
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"deviceId": user.DeviceID,
 	})
-	// bfcc2693-8db1-43be-9f5e-b6f91836da73
-	// c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Token2"})
-	// c.Abort()
-	// return
+
 }

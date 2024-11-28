@@ -82,15 +82,16 @@ func validateDeviceId(
 	accessToken string,
 	userTask []string,
 	scopes []*string) (bool, string) {
+	l := helper.LogContext("AuthMiddleware", "validateDeviceId")
 	url := viper.GetString("UAM_URL")
 	deviceId, err := deviceIdCheckPost(url, accessToken)
 	log.Printf("errLog: %+v", err)
 	if err != nil {
 		return false, "Unauthorized Device"
 	}
-
+	l.Logger(userTask, "userTask")
 	isBackOffice := isBackOfficeUser(userTask)
-
+	l.Logger(isBackOffice, "isBackOffice")
 	if deviceIdToken != *deviceId {
 		return false, "Unauthorized Device2"
 	} else {

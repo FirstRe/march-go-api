@@ -12,7 +12,6 @@ import (
 	"log"
 	"march-inventory/cmd/app/graph/types"
 	"march-inventory/cmd/app/services/inventoryService"
-	"march-inventory/cmd/app/statusCode"
 )
 
 // UploadInventory is the resolver for the uploadInventory field.
@@ -27,12 +26,17 @@ func (r *mutationResolver) UpsertInventory(ctx context.Context, input types.Upse
 	logctx.Logger([]interface{}{}, "")
 	log.Printf("userInfo: %+v", userInfo)
 
-	return inventoryService.UpsertInventory(input)
+	return inventoryService.UpsertInventory(input, userInfo)
 }
 
 // DeleteInventory is the resolver for the deleteInventory field.
 func (r *mutationResolver) DeleteInventory(ctx context.Context, id string) (*types.MutationInventoryResponse, error) {
-	panic(fmt.Errorf("not implemented: DeleteInventory - deleteInventory"))
+	logctx := helper.LogContext(ClassName, "DeleteInventory")
+	userInfo := middlewares.UserInfo(ctx)
+	logctx.Logger([]interface{}{}, "")
+	log.Printf("userInfo: %+v", userInfo)
+
+	return inventoryService.DeleteInventory(id, userInfo)
 }
 
 // FavoriteInventory is the resolver for the favoriteInventory field.
@@ -55,11 +59,10 @@ func (r *queryResolver) GetInventoryNames(ctx context.Context) (*types.Inventory
 
 // GetInventory is the resolver for the getInventory field.
 func (r *queryResolver) GetInventory(ctx context.Context, id *string) (*types.InventoryDataResponse, error) {
-	reponse := types.InventoryDataResponse{
-		Status: statusCode.Success("OK"),
-		Data:   nil,
-	}
-	return &reponse, nil
+	logctx := helper.LogContext(ClassName, "GetInventory")
+	userInfo := middlewares.UserInfo(ctx)
+	logctx.Logger(userInfo, "userInfo")
+	return inventoryService.GetInventory(id, userInfo)
 }
 
 // GetInventories is the resolver for the getInventories field.
@@ -72,5 +75,9 @@ func (r *queryResolver) GetInventories(ctx context.Context, params *types.Params
 
 // GetInventoryAllDeleted is the resolver for the getInventoryAllDeleted field.
 func (r *queryResolver) GetInventoryAllDeleted(ctx context.Context) (*types.DeletedInventoryResponse, error) {
-	panic(fmt.Errorf("not implemented: GetInventoryAllDeleted - getInventoryAllDeleted"))
+	logctx := helper.LogContext(ClassName, "GetInventories")
+	userInfo := middlewares.UserInfo(ctx)
+	logctx.Logger(userInfo, "userInfo")
+	return inventoryService.GetInventoryAllDeleted(userInfo)
+	// panic(fmt.Errorf("not implemented: GetInventoryAllDeleted - getInventoryAllDeleted"))
 }

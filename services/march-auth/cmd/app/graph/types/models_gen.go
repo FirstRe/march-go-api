@@ -32,6 +32,10 @@ type ResponseLogin struct {
 	Status *Status `json:"status,omitempty"`
 }
 
+type SignOutResponse struct {
+	ID string `json:"id"`
+}
+
 type Status struct {
 	Message *string `json:"message,omitempty"`
 	Code    *int    `json:"code,omitempty"`
@@ -56,4 +60,8 @@ type UserInputParams struct {
 	Name     string `json:"name"`
 	Password string `json:"password"`
 	Email    string `json:"email"`
+}
+
+type VerifyAccessTokenResponse struct {
+	Success *bool `json:"success,omitempty"`
 }

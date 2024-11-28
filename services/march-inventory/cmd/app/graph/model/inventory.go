@@ -68,7 +68,7 @@ type Inventory struct {
 	ReorderLevel      *int            `json:"reorderLevel,omitempty"`
 	Sold              int             `gorm:"default:0" json:"sold"`
 	ExpiryDate        *time.Time      `json:"expiryDate,omitempty"`
-	ShopsID           *string         `gorm:"type:varchar(40)" json:"shopsId,omitempty"`
+	ShopsID           string         `gorm:"type:varchar(40)" json:"shopsId,omitempty"`
 	Description       *string         `gorm:"type:varchar(320)" json:"description,omitempty"`
 	Deleted           bool            `gorm:"default:false" json:"deleted"`
 	CreatedBy         string          `json:"createdBy"`

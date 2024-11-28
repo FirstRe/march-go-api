@@ -6,9 +6,9 @@ package resolvers
 
 import (
 	"context"
+	"core/app/helper"
 	"fmt"
 	"march-auth/cmd/app/common"
-	"march-auth/cmd/app/common/helper"
 	graph "march-auth/cmd/app/graph/generated"
 	"march-auth/cmd/app/graph/types"
 	userService "march-auth/cmd/app/services/user"
@@ -22,7 +22,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.UserInput
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, input types.LoginInputParams) (*types.ResponseLogin, error) {
 	logctx := helper.LogContext(ClassName, "Login")
-	logctx.Logger([]interface{}{input})
+	logctx.Logger([]interface{}{input}, "")
 	return userService.Login(&input)
 }
 
@@ -34,7 +34,7 @@ func (r *queryResolver) GetUsers(ctx context.Context) (*types.ResponseGetUser, e
 // Test is the resolver for the test field.
 func (r *queryResolver) Test(ctx context.Context) (*types.Status, error) {
 	logctx := helper.LogContext(ClassName, "Test")
-	logctx.Logger([]interface{}{})
+	logctx.Logger([]interface{}{}, "")
 
 	response := common.StatusResponse(200, "")
 
@@ -44,7 +44,7 @@ func (r *queryResolver) Test(ctx context.Context) (*types.Status, error) {
 // GetPrice is the resolver for the getPrice field.
 func (r *queryResolver) GetPrice(ctx context.Context) (*types.Price, error) {
 	logctx := helper.LogContext(ClassName, "GetPrice")
-	logctx.Logger([]interface{}{})
+	logctx.Logger([]interface{}{}, "")
 
 	response, err := userService.Price()
 

@@ -1,51 +1,61 @@
 package jwt
 
 import (
-	"context"
-	"core/app/helper"
 	"encoding/json"
 	"fmt"
-	"os"
-	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/spf13/viper"
 )
 
 type authString string
 
 type Info struct {
-	Tasks []string `json:"tasks"`
+	Functions []string            `json:"functions"`
+	Tasks     []string            `json:"tasks"`
+	Page      map[string][]string `json:"page"`
 }
 
 type JwtCustomClaim struct {
-	ShopsID  string `json:"shopsId"`
 	Role     string `json:"role"`
-	UserId   string `json:"userId"`
+	Info     Info   `json:"info"`
 	DeviceId string `json:"deviceId"`
+	UserId   string `json:"userId"`
+	ShopsID  string `json:"shopsId"`
 	ShopName string `json:"shopName"`
 	UserName string `json:"userName"`
-	Info     Info   `json:"info"`
+	Picture  string `json:"picture"`
 	jwt.StandardClaims
 }
 
-var jwtSecret = []byte(getJwtSecret())
-
-func getJwtSecret() string {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		return "secret_MAKMAK"
-	}
-	return secret
+type JwtCustomClaimRef struct {
+	ID       string `json:"id"`
+	DeviceId string `json:"deviceId"`
+	jwt.StandardClaims
 }
 
-func JwtGenerate(shopsID string) (string, error) {
-	t := jwt.NewWithClaims(jwt.SigningMethodHS256, &JwtCustomClaim{
-		ShopsID: shopsID,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
-			IssuedAt:  time.Now().Unix(),
-		},
-	})
+var jwtSecret = []byte(getJwtSecret(true))
+var jwtSecretRef = []byte(getJwtSecret(false))
+
+func getJwtSecret(acc bool) string {
+	if acc == true {
+		secret := viper.GetString("JWT_SECRET")
+		if secret == "" {
+			return "secret_MAKMAK"
+		}
+		return secret
+	} else {
+		secret := viper.GetString("JWT_SECRET_REF")
+		if secret == "" {
+			return "secret_MAKMAKMAK"
+		}
+		return secret
+	}
+
+}
+
+func JwtGenerateAcc(jwts *JwtCustomClaim) (string, error) {
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwts)
 
 	token, err := t.SignedString(jwtSecret)
 	if err != nil {
@@ -55,7 +65,18 @@ func JwtGenerate(shopsID string) (string, error) {
 	return token, nil
 }
 
-func JwtValidate(ctx context.Context, token string) (*jwt.Token, error) {
+func JwtGenerateRef(jwts *JwtCustomClaimRef) (string, error) {
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwts)
+
+	token, err := t.SignedString(jwtSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func JwtValidate(token string) (*jwt.Token, error) {
 	return jwt.ParseWithClaims(token, &JwtCustomClaim{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("there's a problem with the signing method")
@@ -65,7 +86,7 @@ func JwtValidate(ctx context.Context, token string) (*jwt.Token, error) {
 }
 
 func VerifyJWT(tokens string) (*JwtCustomClaim, error) {
-	logctx := helper.LogContext("JWT", "VerifyJWT")
+	// logctx := helper.LogContext("JWT", "VerifyJWT")
 
 	token, err := jwt.Parse(tokens, nil)
 
@@ -74,7 +95,7 @@ func VerifyJWT(tokens string) (*JwtCustomClaim, error) {
 	}
 
 	claims, _ := token.Claims.(jwt.MapClaims)
-	logctx.Logger(claims, "claims")
+	// logctx.Logger(claims, "claims")
 
 	shopsId, _ := claims["shopsId"].(string)
 	role, _ := claims["role"].(string)

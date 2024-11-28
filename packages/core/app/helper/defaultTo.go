@@ -18,7 +18,7 @@ func GetOptionalSize(s *types.SizeInventory) *string {
 	length := DefaultTo(s.Length, 0)
 	height := DefaultTo(s.Height, 0)
 
-	response := fmt.Sprintf("%d/%d/%d/%d", weight, width, length, height)
+	response := fmt.Sprintf("%d|%d|%d|%d", weight, width, length, height)
 
 	return &response
 }

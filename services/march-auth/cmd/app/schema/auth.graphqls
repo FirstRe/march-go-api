@@ -1,0 +1,21 @@
+type Token {
+  access_token: String!
+  refresh_token: String
+  username: String
+  userId: String
+}
+
+type SignOutResponse {
+  id: String!
+}
+
+type VerifyAccessTokenResponse {
+  success: Boolean
+}
+
+extend type Mutation {
+  tokenExpire(refreshToken: String!): Token
+  signOut(id: String!): SignOutResponse
+  verifyAccessToken(token: String!): VerifyAccessTokenResponse
+  signInOAuth(code: String!): Token
+}

@@ -2,15 +2,16 @@ package dto
 
 import (
 	. "core/app/helper"
+	"core/app/middlewares"
 	"march-inventory/cmd/app/graph/model"
 	"march-inventory/cmd/app/graph/types"
 	"time"
 )
 
-func MapInputToInventory(input types.UpsertInventoryInput) model.Inventory {
+func MapInputToInventory(input types.UpsertInventoryInput, userInfo middlewares.UserClaims) model.Inventory {
 	var expiryDate *time.Time
-	if input.ExpiryDate != "" {
-		parsedDate, err := time.Parse(time.RFC3339, input.ExpiryDate)
+	if input.ExpiryDate != nil {
+		parsedDate, err := time.Parse(time.RFC3339, *input.ExpiryDate)
 		if err == nil {
 			expiryDate = &parsedDate
 		}
@@ -18,7 +19,7 @@ func MapInputToInventory(input types.UpsertInventoryInput) model.Inventory {
 
 	return model.Inventory{
 		ID:                DefaultTo(input.ID, ""),
-		Name:              input.Name,
+		Name:              input.Name + "|" + userInfo.UserInfo.ShopsID,
 		InventoryTypeID:   input.InventoryTypeID,
 		InventoryBrandID:  input.InventoryBrandID,
 		InventoryBranchID: input.InventoryBranchID,
@@ -31,8 +32,9 @@ func MapInputToInventory(input types.UpsertInventoryInput) model.Inventory {
 		ReorderLevel:      input.ReorderLevel,
 		ExpiryDate:        expiryDate,
 		Description:       input.Description,
-		CreatedBy:         DefaultTo(input.CreatedBy, ""),
-		UpdatedBy:         DefaultTo(input.UpdatedBy, ""),
+		ShopsID:           userInfo.UserInfo.ShopsID,
+		CreatedBy:         userInfo.UserInfo.UserName,
+		UpdatedBy:         userInfo.UserInfo.UserName,
 		Favorite:          DefaultTo(input.Favorite, false),
 	}
 }

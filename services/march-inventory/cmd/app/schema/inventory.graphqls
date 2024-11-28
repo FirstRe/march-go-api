@@ -47,7 +47,7 @@ type Inventory {
   priceMember: Int
   price: Int!
   reorderLevel: Int
-  expiryDate: String!
+  expiryDate: String
   inventoryBrand: InventoryBrand
   inventoryBranch: InventoryBranch
   inventoryType: InventoryType
@@ -91,7 +91,7 @@ input UpsertInventoryInput {
   size: SizeInventory
   price: Int!
   priceMember: Int
-  expiryDate: String!
+  expiryDate: String
   description: String
   createdBy: String
   updatedBy: String

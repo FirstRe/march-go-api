@@ -31,13 +31,6 @@ type ResponseGetUser {
   status: Status
 }
 
-type Token {
-  access_token: String!
-  refresh_token: String
-  username: String
-  userId: String
-}
-
 type ResponseLogin {
   data: Token
   status: Status

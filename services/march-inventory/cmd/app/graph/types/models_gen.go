@@ -66,7 +66,7 @@ type Inventory struct {
 	PriceMember     *int             `json:"priceMember,omitempty"`
 	Price           int              `json:"price"`
 	ReorderLevel    *int             `json:"reorderLevel,omitempty"`
-	ExpiryDate      string           `json:"expiryDate"`
+	ExpiryDate      *string          `json:"expiryDate,omitempty"`
 	InventoryBrand  *InventoryBrand  `json:"inventoryBrand,omitempty"`
 	InventoryBranch *InventoryBranch `json:"inventoryBranch,omitempty"`
 	InventoryType   *InventoryType   `json:"inventoryType,omitempty"`
@@ -290,7 +290,7 @@ type UpsertInventoryInput struct {
 	Size              *SizeInventory `json:"size,omitempty"`
 	Price             int            `json:"price"`
 	PriceMember       *int           `json:"priceMember,omitempty"`
-	ExpiryDate        string         `json:"expiryDate"`
+	ExpiryDate        *string        `json:"expiryDate,omitempty"`
 	Description       *string        `json:"description,omitempty"`
 	CreatedBy         *string        `json:"createdBy,omitempty"`
 	UpdatedBy         *string        `json:"updatedBy,omitempty"`

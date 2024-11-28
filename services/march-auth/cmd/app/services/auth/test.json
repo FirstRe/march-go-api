@@ -1,0 +1,787 @@
+{
+  "id": "f8bab2a4-cb39-499c-827c-c22507369847",
+  "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+  "group": {
+    "id": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+    "name": "SuperAdmin|first_shop",
+    "shopsId": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+    "shop": {
+      "id": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+      "name": "first_shop",
+      "description": "test_auto_create",
+      "createdBy": "system",
+      "updatedBy": "system",
+      "createdAt": "2024-11-26T08:34:11.672+07:00",
+      "updatedAt": "2024-11-26T08:34:11.672+07:00",
+      "users": null,
+      "groups": null,
+      "groupTasks": null
+    },
+    "groupFunctions": [
+      {
+        "id": "1d9869e1-5cc4-4d9f-9b52-e95a657b61ec",
+        "name": "SuperAdmin|first_shop_MENU:INVENTORY",
+        "functionId": "96a74331-8713-4c0b-b558-f0dcd6186066",
+        "function": {
+          "id": "96a74331-8713-4c0b-b558-f0dcd6186066",
+          "name": "MENU:INVENTORY",
+          "groupFunctions": null,
+          "tasks": null
+        },
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "create": true,
+        "view": true,
+        "update": true
+      },
+      {
+        "id": "30280acc-9311-4ecb-9e2e-66cf3faf4e91",
+        "name": "SuperAdmin|first_shop_MENU:USER",
+        "functionId": "3787f89a-4791-408e-83da-df4d7bf732f7",
+        "function": {
+          "id": "3787f89a-4791-408e-83da-df4d7bf732f7",
+          "name": "MENU:USER",
+          "groupFunctions": null,
+          "tasks": null
+        },
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "create": true,
+        "view": true,
+        "update": true
+      },
+      {
+        "id": "3501fc95-a3c0-4809-b7f4-485ef05177fc",
+        "name": "SuperAdmin|first_shop_MENU:DASHBOARD",
+        "functionId": "c99bc7f8-a272-4813-be1b-16ede3146438",
+        "function": {
+          "id": "c99bc7f8-a272-4813-be1b-16ede3146438",
+          "name": "MENU:DASHBOARD",
+          "groupFunctions": null,
+          "tasks": null
+        },
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "create": true,
+        "view": true,
+        "update": true
+      },
+      {
+        "id": "3d29c52e-ce71-4780-a8de-343da699c0ac",
+        "name": "SuperAdmin|first_shop_MENU:CUSTOMER",
+        "functionId": "c1b57d27-5d3f-4496-a18e-a621e63d358f",
+        "function": {
+          "id": "c1b57d27-5d3f-4496-a18e-a621e63d358f",
+          "name": "MENU:CUSTOMER",
+          "groupFunctions": null,
+          "tasks": null
+        },
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "create": true,
+        "view": true,
+        "update": true
+      },
+      {
+        "id": "72957b42-7b40-4a7a-82ce-1218bae99b8e",
+        "name": "SuperAdmin|first_shop_MENU:SALES",
+        "functionId": "5d510dc7-3302-4d19-b2ef-b97a19139e16",
+        "function": {
+          "id": "5d510dc7-3302-4d19-b2ef-b97a19139e16",
+          "name": "MENU:SALES",
+          "groupFunctions": null,
+          "tasks": null
+        },
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "create": true,
+        "view": true,
+        "update": true
+      }
+    ],
+    "users": null,
+    "groupTasks": [
+      {
+        "id": "24140f79-2bcc-4860-9da2-46d86e605bad",
+        "name": "SuperAdmin|first_shop_INBranchViewer",
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "taskId": "991b691c-0fe4-47e4-a39d-a8d04390cff7",
+        "task": {
+          "id": "",
+          "name": "",
+          "functionId": "",
+          "description": null,
+          "function": {
+            "id": "",
+            "name": "",
+            "groupFunctions": null,
+            "tasks": null
+          },
+          "groupTasks": null
+        },
+        "shopsId": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+        "shop": {
+          "id": "",
+          "name": "",
+          "description": null,
+          "createdBy": "",
+          "updatedBy": "",
+          "createdAt": "0001-01-01T00:00:00Z",
+          "updatedAt": "0001-01-01T00:00:00Z",
+          "users": null,
+          "groups": null,
+          "groupTasks": null
+        },
+        "createdBy": "system",
+        "updatedBy": "system",
+        "createdAt": "2024-11-26T08:34:11.702+07:00",
+        "updatedAt": "2024-11-26T08:34:11.702+07:00"
+      },
+      {
+        "id": "2662e6b0-540e-47c4-b687-e95bea6e8c2e",
+        "name": "SuperAdmin|first_shop_INBranchMaker",
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "taskId": "5fe1d67e-e52b-494e-bccf-709059ff297c",
+        "task": {
+          "id": "",
+          "name": "",
+          "functionId": "",
+          "description": null,
+          "function": {
+            "id": "",
+            "name": "",
+            "groupFunctions": null,
+            "tasks": null
+          },
+          "groupTasks": null
+        },
+        "shopsId": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+        "shop": {
+          "id": "",
+          "name": "",
+          "description": null,
+          "createdBy": "",
+          "updatedBy": "",
+          "createdAt": "0001-01-01T00:00:00Z",
+          "updatedAt": "0001-01-01T00:00:00Z",
+          "users": null,
+          "groups": null,
+          "groupTasks": null
+        },
+        "createdBy": "system",
+        "updatedBy": "system",
+        "createdAt": "2024-11-26T08:34:11.702+07:00",
+        "updatedAt": "2024-11-26T08:34:11.702+07:00"
+      },
+      {
+        "id": "344aca71-53b9-4e11-ab2f-4d07a8af368c",
+        "name": "SuperAdmin|first_shop_INBrandViewer",
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "taskId": "349221fc-8939-4c4f-aa95-3d99d713cc42",
+        "task": {
+          "id": "",
+          "name": "",
+          "functionId": "",
+          "description": null,
+          "function": {
+            "id": "",
+            "name": "",
+            "groupFunctions": null,
+            "tasks": null
+          },
+          "groupTasks": null
+        },
+        "shopsId": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+        "shop": {
+          "id": "",
+          "name": "",
+          "description": null,
+          "createdBy": "",
+          "updatedBy": "",
+          "createdAt": "0001-01-01T00:00:00Z",
+          "updatedAt": "0001-01-01T00:00:00Z",
+          "users": null,
+          "groups": null,
+          "groupTasks": null
+        },
+        "createdBy": "system",
+        "updatedBy": "system",
+        "createdAt": "2024-11-26T08:34:11.702+07:00",
+        "updatedAt": "2024-11-26T08:34:11.702+07:00"
+      },
+      {
+        "id": "47bbeed0-46f7-40b2-b225-83d261811640",
+        "name": "SuperAdmin|first_shop_INMaker",
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "taskId": "c9610668-5cd0-415e-a0b7-decd78f7a494",
+        "task": {
+          "id": "",
+          "name": "",
+          "functionId": "",
+          "description": null,
+          "function": {
+            "id": "",
+            "name": "",
+            "groupFunctions": null,
+            "tasks": null
+          },
+          "groupTasks": null
+        },
+        "shopsId": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+        "shop": {
+          "id": "",
+          "name": "",
+          "description": null,
+          "createdBy": "",
+          "updatedBy": "",
+          "createdAt": "0001-01-01T00:00:00Z",
+          "updatedAt": "0001-01-01T00:00:00Z",
+          "users": null,
+          "groups": null,
+          "groupTasks": null
+        },
+        "createdBy": "system",
+        "updatedBy": "system",
+        "createdAt": "2024-11-26T08:34:11.702+07:00",
+        "updatedAt": "2024-11-26T08:34:11.702+07:00"
+      },
+      {
+        "id": "a3792cf1-2e34-4143-a7a9-4d006d9eaa01",
+        "name": "SuperAdmin|first_shop_INBrandMaker",
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "taskId": "033c261a-b4fd-466b-9f17-8dd011abff5e",
+        "task": {
+          "id": "",
+          "name": "",
+          "functionId": "",
+          "description": null,
+          "function": {
+            "id": "",
+            "name": "",
+            "groupFunctions": null,
+            "tasks": null
+          },
+          "groupTasks": null
+        },
+        "shopsId": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+        "shop": {
+          "id": "",
+          "name": "",
+          "description": null,
+          "createdBy": "",
+          "updatedBy": "",
+          "createdAt": "0001-01-01T00:00:00Z",
+          "updatedAt": "0001-01-01T00:00:00Z",
+          "users": null,
+          "groups": null,
+          "groupTasks": null
+        },
+        "createdBy": "system",
+        "updatedBy": "system",
+        "createdAt": "2024-11-26T08:34:11.702+07:00",
+        "updatedAt": "2024-11-26T08:34:11.702+07:00"
+      },
+      {
+        "id": "b8943dec-db9c-456d-be34-9c374bab0d38",
+        "name": "SuperAdmin|first_shop_INViewer",
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "taskId": "5e2adbb0-d8aa-4744-8006-584bf810e352",
+        "task": {
+          "id": "",
+          "name": "",
+          "functionId": "",
+          "description": null,
+          "function": {
+            "id": "",
+            "name": "",
+            "groupFunctions": null,
+            "tasks": null
+          },
+          "groupTasks": null
+        },
+        "shopsId": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+        "shop": {
+          "id": "",
+          "name": "",
+          "description": null,
+          "createdBy": "",
+          "updatedBy": "",
+          "createdAt": "0001-01-01T00:00:00Z",
+          "updatedAt": "0001-01-01T00:00:00Z",
+          "users": null,
+          "groups": null,
+          "groupTasks": null
+        },
+        "createdBy": "system",
+        "updatedBy": "system",
+        "createdAt": "2024-11-26T08:34:11.702+07:00",
+        "updatedAt": "2024-11-26T08:34:11.702+07:00"
+      },
+      {
+        "id": "b98a57b7-3cb4-4cad-8501-9d3e5e8599ba",
+        "name": "SuperAdmin|first_shop_INCSV",
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "taskId": "945abef9-5ea9-447b-8a7e-aa3b22ea63d2",
+        "task": {
+          "id": "",
+          "name": "",
+          "functionId": "",
+          "description": null,
+          "function": {
+            "id": "",
+            "name": "",
+            "groupFunctions": null,
+            "tasks": null
+          },
+          "groupTasks": null
+        },
+        "shopsId": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+        "shop": {
+          "id": "",
+          "name": "",
+          "description": null,
+          "createdBy": "",
+          "updatedBy": "",
+          "createdAt": "0001-01-01T00:00:00Z",
+          "updatedAt": "0001-01-01T00:00:00Z",
+          "users": null,
+          "groups": null,
+          "groupTasks": null
+        },
+        "createdBy": "system",
+        "updatedBy": "system",
+        "createdAt": "2024-11-26T08:34:11.702+07:00",
+        "updatedAt": "2024-11-26T08:34:11.702+07:00"
+      },
+      {
+        "id": "ebd57550-9639-484b-b34c-6a23631e8ba9",
+        "name": "SuperAdmin|first_shop_INTrashMaker",
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "taskId": "2720bbfb-8824-45c7-8261-770892a88ccb",
+        "task": {
+          "id": "",
+          "name": "",
+          "functionId": "",
+          "description": null,
+          "function": {
+            "id": "",
+            "name": "",
+            "groupFunctions": null,
+            "tasks": null
+          },
+          "groupTasks": null
+        },
+        "shopsId": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+        "shop": {
+          "id": "",
+          "name": "",
+          "description": null,
+          "createdBy": "",
+          "updatedBy": "",
+          "createdAt": "0001-01-01T00:00:00Z",
+          "updatedAt": "0001-01-01T00:00:00Z",
+          "users": null,
+          "groups": null,
+          "groupTasks": null
+        },
+        "createdBy": "system",
+        "updatedBy": "system",
+        "createdAt": "2024-11-26T08:34:11.702+07:00",
+        "updatedAt": "2024-11-26T08:34:11.702+07:00"
+      },
+      {
+        "id": "ef7cd58f-b04f-4b09-b70e-17947b5cd9f5",
+        "name": "SuperAdmin|first_shop_INTypeMaker",
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "taskId": "08747b9f-6ebd-469f-aa58-df35788c52c9",
+        "task": {
+          "id": "",
+          "name": "",
+          "functionId": "",
+          "description": null,
+          "function": {
+            "id": "",
+            "name": "",
+            "groupFunctions": null,
+            "tasks": null
+          },
+          "groupTasks": null
+        },
+        "shopsId": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+        "shop": {
+          "id": "",
+          "name": "",
+          "description": null,
+          "createdBy": "",
+          "updatedBy": "",
+          "createdAt": "0001-01-01T00:00:00Z",
+          "updatedAt": "0001-01-01T00:00:00Z",
+          "users": null,
+          "groups": null,
+          "groupTasks": null
+        },
+        "createdBy": "system",
+        "updatedBy": "system",
+        "createdAt": "2024-11-26T08:34:11.702+07:00",
+        "updatedAt": "2024-11-26T08:34:11.702+07:00"
+      },
+      {
+        "id": "f810b54d-52f1-4c72-9549-dd9e0a619e3b",
+        "name": "SuperAdmin|first_shop_INTypeViewer",
+        "groupId": "9596c980-1cae-4bac-b27b-b54bbac9bffb",
+        "group": {
+          "id": "",
+          "name": "",
+          "shopsId": "",
+          "shop": {
+            "id": "",
+            "name": "",
+            "description": null,
+            "createdBy": "",
+            "updatedBy": "",
+            "createdAt": "0001-01-01T00:00:00Z",
+            "updatedAt": "0001-01-01T00:00:00Z",
+            "users": null,
+            "groups": null,
+            "groupTasks": null
+          },
+          "groupFunctions": null,
+          "users": null,
+          "groupTasks": null
+        },
+        "taskId": "499f1e4b-90bc-4d17-9286-104ce53c5e88",
+        "task": {
+          "id": "",
+          "name": "",
+          "functionId": "",
+          "description": null,
+          "function": {
+            "id": "",
+            "name": "",
+            "groupFunctions": null,
+            "tasks": null
+          },
+          "groupTasks": null
+        },
+        "shopsId": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+        "shop": {
+          "id": "",
+          "name": "",
+          "description": null,
+          "createdBy": "",
+          "updatedBy": "",
+          "createdAt": "0001-01-01T00:00:00Z",
+          "updatedAt": "0001-01-01T00:00:00Z",
+          "users": null,
+          "groups": null,
+          "groupTasks": null
+        },
+        "createdBy": "system",
+        "updatedBy": "system",
+        "createdAt": "2024-11-26T08:34:11.702+07:00",
+        "updatedAt": "2024-11-26T08:34:11.702+07:00"
+      }
+    ]
+  },
+  "shopsId": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+  "shop": {
+    "id": "984d0d87-7d74-45c5-9d94-6ebcb74a98de",
+    "name": "first_shop",
+    "description": "test_auto_create",
+    "createdBy": "system",
+    "updatedBy": "system",
+    "createdAt": "2024-11-26T08:34:11.672+07:00",
+    "updatedAt": "2024-11-26T08:34:11.672+07:00",
+    "users": null,
+    "groups": null,
+    "groupTasks": null
+  },
+  "username": "NochTich",
+  "password": null,
+  "isSuperAdmin": true,
+  "email": "firstzaxshot95@gmail.com",
+  "isRegistered": true,
+  "picture": "https://lh3.googleusercontent.com/a/ACg8ocJkBRKtkxE8xXWMctj0qiWn0m0-JqXSBXk1hXAw_qHnMRPyRi66=s96-c",
+  "refreshToken": null,
+  "deleted": false,
+  "deviceId": null,
+  "createdBy": "system",
+  "updatedBy": "system",
+  "createdAt": "2024-11-26T08:34:11.768+07:00",
+  "updatedAt": "2024-11-27T11:06:06.652+07:00"
+}

@@ -73,8 +73,15 @@ func main() {
 	}
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
-	db.AutoMigrate(&model.Post{}, &model.User{})
-
+	db.AutoMigrate(
+		&model.Function{},      // Independent
+		&model.Shop{},          // Independent
+		&model.Group{},         // Depends on Shop
+		&model.User{},          // Depends on Group and Shop
+		&model.Task{},          // Depends on Function
+		&model.GroupFunction{}, // Depends on Group and Function
+		&model.GroupTask{},     // Depends on Group, Task, and Shop
+	)
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
