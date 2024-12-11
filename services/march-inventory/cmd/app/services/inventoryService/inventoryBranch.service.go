@@ -10,6 +10,7 @@ import (
 	"march-inventory/cmd/app/graph/model"
 	"march-inventory/cmd/app/graph/types"
 	translation "march-inventory/cmd/app/i18n"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -153,7 +154,7 @@ func GetInventoryBranchs(params *types.ParamsInventoryBranch, userInfo middlewar
 
 	searchParam := ""
 	if params != nil && params.Search != nil {
-		searchParam = "%" + *params.Search + "%"
+		searchParam = "%" + *params.Search + "%|%"
 	}
 	log.Printf("searchParam: %+v", searchParam)
 
@@ -166,7 +167,7 @@ func GetInventoryBranchs(params *types.ParamsInventoryBranch, userInfo middlewar
 	for d, inventoryBranch := range inventoryBranchs {
 		inventoryBranchsData[d] = &types.InventoryBranch{
 			ID:          &inventoryBranch.ID,
-			Name:        inventoryBranch.Name,
+			Name:        strings.Split(inventoryBranch.Name, "|")[0],
 			Description: inventoryBranch.Description,
 			CreatedBy:   &inventoryBranch.CreatedBy,
 			CreatedAt:   inventoryBranch.CreatedAt.String(),
@@ -199,7 +200,7 @@ func GetInventoryBranch(id *string) (*types.InventoryBranch, error) {
 
 	inventoryBranchData := types.InventoryBranch{
 		ID:          &inventoryBranch.ID,
-		Name:        inventoryBranch.Name,
+		Name:        strings.Split(inventoryBranch.Name, "|")[0],
 		Description: inventoryBranch.Description,
 		CreatedBy:   &inventoryBranch.CreatedBy,
 		CreatedAt:   inventoryBranch.CreatedAt.String(),

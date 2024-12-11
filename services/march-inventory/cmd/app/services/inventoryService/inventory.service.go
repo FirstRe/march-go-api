@@ -14,6 +14,7 @@ import (
 	translation "march-inventory/cmd/app/i18n"
 	"math"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -23,7 +24,7 @@ func UpsertInventory(input types.UpsertInventoryInput, userInfo middlewares.User
 	logctx := helper.LogContext(ClassName, "UpsertInventory")
 	logctx.Logger(input, "input")
 	findDup := model.Inventory{}
-	name := input.Name + "|" + userInfo.UserInfo.ShopsID
+	name := input.Name + "|" + input.InventoryBranchID + "|" + userInfo.UserInfo.ShopsID
 	gormDb.Repos.Model(&model.Inventory{}).Where("name = ? AND shops_Id = ?", name, userInfo.UserInfo.ShopsID).First(&findDup)
 
 	if findDup.Name != "" && input.ID == nil {
@@ -81,7 +82,7 @@ func UpsertInventory(input types.UpsertInventoryInput, userInfo middlewares.User
 		reponsePass := types.MutationInventoryResponse{
 			Status: statusCode.Success(translation.LocalizeMessage(onOkLocalT)),
 			Data: &types.ResponseID{
-				ID: &findDup.ID,
+				ID: &inventoryData.ID,
 			},
 		}
 		return &reponsePass, nil
@@ -147,7 +148,7 @@ func GetInventories(params *types.ParamsInventory, userInfo middlewares.UserClai
 		if strings.HasPrefix(*params.Search, "#") {
 			isSerialNumber = true
 		}
-		searchParam = "%" + *params.Search + "%"
+		searchParam = "%" + *params.Search + "%|%"
 	}
 	log.Printf("searchParam: %+v", searchParam)
 
@@ -203,7 +204,7 @@ func GetInventories(params *types.ParamsInventory, userInfo middlewares.UserClai
 	for d, inventory := range inventories {
 		inventoryBrand := types.InventoryBrand{
 			ID:          &inventory.InventoryBrand.ID,
-			Name:        inventory.InventoryBrand.Name,
+			Name:        strings.Split(inventory.InventoryBrand.Name, "|")[0],
 			Description: inventory.InventoryBrand.Description,
 			CreatedBy:   &inventory.InventoryBrand.CreatedBy,
 			CreatedAt:   inventory.InventoryBrand.CreatedAt.String(),
@@ -213,7 +214,7 @@ func GetInventories(params *types.ParamsInventory, userInfo middlewares.UserClai
 
 		inventoryBranch := types.InventoryBranch{
 			ID:          &inventory.InventoryBranch.ID,
-			Name:        inventory.InventoryBranch.Name,
+			Name:        strings.Split(inventory.InventoryBranch.Name, "|")[0],
 			Description: inventory.InventoryBranch.Description,
 			CreatedBy:   &inventory.InventoryBranch.CreatedBy,
 			CreatedAt:   inventory.InventoryBranch.CreatedAt.String(),
@@ -223,7 +224,7 @@ func GetInventories(params *types.ParamsInventory, userInfo middlewares.UserClai
 
 		inventoryType := types.InventoryType{
 			ID:          &inventory.InventoryType.ID,
-			Name:        inventory.InventoryType.Name,
+			Name:        strings.Split(inventory.InventoryType.Name, "|")[0],
 			Description: inventory.InventoryType.Description,
 			CreatedBy:   &inventory.InventoryType.CreatedBy,
 			CreatedAt:   inventory.InventoryType.CreatedAt.String(),
@@ -233,17 +234,17 @@ func GetInventories(params *types.ParamsInventory, userInfo middlewares.UserClai
 
 		expiryDateStr := ""
 		if inventory.ExpiryDate != nil {
-			expiryDateStr = inventory.ExpiryDate.String()
+			expiryDateStr = inventory.ExpiryDate.UTC().Format(time.DateTime)
 		}
 
 		inventoriesData[d] = &types.Inventory{
 			ID:              &inventory.ID,
-			Name:            inventory.Name,
+			Name:            strings.Split(inventory.Name, "|")[0],
 			Description:     inventory.Description,
 			CreatedBy:       &inventory.CreatedBy,
-			CreatedAt:       inventory.CreatedAt.String(),
+			CreatedAt:       inventory.CreatedAt.UTC().Format(time.DateTime),
 			UpdatedBy:       &inventory.UpdatedBy,
-			UpdatedAt:       inventory.UpdatedAt.String(),
+			UpdatedAt:       inventory.UpdatedAt.UTC().Format(time.DateTime),
 			Amount:          inventory.Amount,
 			Sold:            &inventory.Sold,
 			Sku:             inventory.SKU,
@@ -261,7 +262,7 @@ func GetInventories(params *types.ParamsInventory, userInfo middlewares.UserClai
 	}
 	logctx.Logger(inventories, "[log-api] inventories1")
 	var count int64
-	if err := query.Find(&inventories).Count(&count).Error; err != nil {
+	if err := gormDb.Repos.Model(&model.Inventory{}).Count(&count).Where("shops_id = ?", userInfo.UserInfo.ShopsID).Error; err != nil {
 		count = 0
 	}
 	totalRow := int(count)
@@ -295,7 +296,7 @@ func GetInventoryNames(userInfo middlewares.UserClaims) (*types.InventoryNameRes
 	for d, inventory := range inventories {
 		inventoryName[d] = &types.InventoryName{
 			ID:   &inventory.ID,
-			Name: &inventory.Name,
+			Name: &strings.Split(inventory.Name, "|")[0],
 		}
 	}
 
@@ -324,7 +325,7 @@ func GetInventoryAllDeleted(userInfo middlewares.UserClaims) (*types.DeletedInve
 	for d, inventory := range inventories {
 		deletedInventory[d] = &types.DeletedInventoryType{
 			ID:        &inventory.ID,
-			Name:      &inventory.Name,
+			Name:      &strings.Split(inventory.Name, "|")[0],
 			CreatedBy: &inventory.CreatedBy,
 			UpdatedBy: &inventory.UpdatedBy,
 			UpdatedAt: inventory.UpdatedAt.String(),
@@ -345,7 +346,7 @@ func GetInventoryAllDeleted(userInfo middlewares.UserClaims) (*types.DeletedInve
 	for d, inventoryType := range inventoryTypes {
 		deletedInventoryType[d] = &types.DeletedInventoryType{
 			ID:        &inventoryType.ID,
-			Name:      &inventoryType.Name,
+			Name:      &strings.Split(inventoryType.Name, "|")[0],
 			CreatedBy: &inventoryType.CreatedBy,
 			UpdatedBy: &inventoryType.UpdatedBy,
 			UpdatedAt: inventoryType.UpdatedAt.String(),
@@ -366,7 +367,7 @@ func GetInventoryAllDeleted(userInfo middlewares.UserClaims) (*types.DeletedInve
 	for d, inventoryBrand := range inventoryBrands {
 		deletedInventoryBrand[d] = &types.DeletedInventoryType{
 			ID:        &inventoryBrand.ID,
-			Name:      &inventoryBrand.Name,
+			Name:      &strings.Split(inventoryBrand.Name, "|")[0],
 			CreatedBy: &inventoryBrand.CreatedBy,
 			UpdatedBy: &inventoryBrand.UpdatedBy,
 			UpdatedAt: inventoryBrand.UpdatedAt.String(),
@@ -387,7 +388,7 @@ func GetInventoryAllDeleted(userInfo middlewares.UserClaims) (*types.DeletedInve
 	for d, inventoryBranch := range inventoryBranchs {
 		deletedInventoryBranch[d] = &types.DeletedInventoryType{
 			ID:        &inventoryBranch.ID,
-			Name:      &inventoryBranch.Name,
+			Name:      &strings.Split(inventoryBranch.Name, "|")[0],
 			CreatedBy: &inventoryBranch.CreatedBy,
 			UpdatedBy: &inventoryBranch.UpdatedBy,
 			UpdatedAt: inventoryBranch.UpdatedAt.String(),
@@ -437,7 +438,7 @@ func GetInventory(id *string, userInfo middlewares.UserClaims) (*types.Inventory
 
 	inventoryBrand := types.InventoryBrand{
 		ID:          &inventory.InventoryBrand.ID,
-		Name:        inventory.InventoryBrand.Name,
+		Name:        strings.Split(inventory.InventoryBrand.Name, "|")[0],
 		Description: inventory.InventoryBrand.Description,
 		CreatedBy:   &inventory.InventoryBrand.CreatedBy,
 		CreatedAt:   inventory.InventoryBrand.CreatedAt.String(),
@@ -447,7 +448,7 @@ func GetInventory(id *string, userInfo middlewares.UserClaims) (*types.Inventory
 
 	inventoryBranch := types.InventoryBranch{
 		ID:          &inventory.InventoryBranch.ID,
-		Name:        inventory.InventoryBranch.Name,
+		Name:        strings.Split(inventory.InventoryBranch.Name, "|")[0],
 		Description: inventory.InventoryBranch.Description,
 		CreatedBy:   &inventory.InventoryBranch.CreatedBy,
 		CreatedAt:   inventory.InventoryBranch.CreatedAt.String(),
@@ -457,7 +458,7 @@ func GetInventory(id *string, userInfo middlewares.UserClaims) (*types.Inventory
 
 	inventoryType := types.InventoryType{
 		ID:          &inventory.InventoryType.ID,
-		Name:        inventory.InventoryType.Name,
+		Name:        strings.Split(inventory.InventoryType.Name, "|")[0],
 		Description: inventory.InventoryType.Description,
 		CreatedBy:   &inventory.InventoryType.CreatedBy,
 		CreatedAt:   inventory.InventoryType.CreatedAt.String(),
@@ -467,17 +468,17 @@ func GetInventory(id *string, userInfo middlewares.UserClaims) (*types.Inventory
 
 	expiryDateStr := ""
 	if inventory.ExpiryDate != nil {
-		expiryDateStr = inventory.ExpiryDate.String()
+		expiryDateStr = inventory.ExpiryDate.UTC().Format(time.DateTime)
 	}
 
 	inventoryData := &types.Inventory{
 		ID:              &inventory.ID,
-		Name:            inventory.Name,
+		Name:            strings.Split(inventory.Name, "|")[0],
 		Description:     inventory.Description,
 		CreatedBy:       &inventory.CreatedBy,
-		CreatedAt:       inventory.CreatedAt.String(),
+		CreatedAt:       inventory.CreatedAt.UTC().Format(time.DateTime),
 		UpdatedBy:       &inventory.UpdatedBy,
-		UpdatedAt:       inventory.UpdatedAt.String(),
+		UpdatedAt:       inventory.UpdatedAt.UTC().Format(time.DateTime),
 		Amount:          inventory.Amount,
 		Sold:            &inventory.Sold,
 		Sku:             inventory.SKU,
@@ -555,8 +556,13 @@ func FavoriteInventory(id string, userInfo middlewares.UserClaims) (*types.Mutat
 		}
 		return &reponseError, err
 	} else {
+		favoriteTxt := "favorite.add"
+		if inventory.Favorite {
+			favoriteTxt = "favorite.delete"
+		}
+
 		reponseSuccess := types.MutationInventoryResponse{
-			Status: statusCode.Success(translation.LocalizeMessage("Success.inventory")),
+			Status: statusCode.Success(translation.LocalizeMessage(favoriteTxt)),
 			Data: &types.ResponseID{
 				ID: &inventory.ID,
 			},

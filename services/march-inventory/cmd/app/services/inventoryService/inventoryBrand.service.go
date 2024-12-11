@@ -10,6 +10,7 @@ import (
 	"march-inventory/cmd/app/graph/model"
 	"march-inventory/cmd/app/graph/types"
 	translation "march-inventory/cmd/app/i18n"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -153,7 +154,7 @@ func GetInventoryBrands(params *types.ParamsInventoryBrand, userInfo middlewares
 
 	searchParam := ""
 	if params != nil && params.Search != nil {
-		searchParam = "%" + *params.Search + "%"
+		searchParam = "%" + *params.Search + "%|%"
 	}
 	log.Printf("searchParam: %+v", searchParam)
 
@@ -166,7 +167,7 @@ func GetInventoryBrands(params *types.ParamsInventoryBrand, userInfo middlewares
 	for d, inventoryBrand := range inventoryBrands {
 		inventoryBrandsData[d] = &types.InventoryBrand{
 			ID:          &inventoryBrand.ID,
-			Name:        inventoryBrand.Name,
+			Name:        strings.Split(inventoryBrand.Name, "|")[0],
 			Description: inventoryBrand.Description,
 			CreatedBy:   &inventoryBrand.CreatedBy,
 			CreatedAt:   inventoryBrand.CreatedAt.String(),
@@ -200,7 +201,7 @@ func GetInventoryBrand(id *string) (*types.InventoryBrand, error) {
 
 	inventoryBrandData := types.InventoryBrand{
 		ID:          &inventoryBrand.ID,
-		Name:        inventoryBrand.Name,
+		Name:        strings.Split(inventoryBrand.Name, "|")[0],
 		Description: inventoryBrand.Description,
 		CreatedBy:   &inventoryBrand.CreatedBy,
 		CreatedAt:   inventoryBrand.CreatedAt.String(),
