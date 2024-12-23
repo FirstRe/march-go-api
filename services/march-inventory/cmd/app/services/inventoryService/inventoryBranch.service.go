@@ -11,6 +11,7 @@ import (
 	"march-inventory/cmd/app/graph/types"
 	translation "march-inventory/cmd/app/i18n"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -30,10 +31,18 @@ func UpsertInventoryBranch(input *types.UpsertInventoryBranchInput, userInfo mid
 		return &reponseError, nil
 	}
 
+	if input.Name == "" {
+		reponseError := types.MutationInventoryBranchResponse{
+			Status: statusCode.BadRequest("name is required"),
+			Data:   nil,
+		}
+		return &reponseError, nil
+	}
+
 	logctx.Logger(findDup, "findDup")
 	if input.ID != nil && findDup.Name != "" && *input.ID != findDup.ID {
 		reponseError := types.MutationInventoryBranchResponse{
-			Status: statusCode.BadRequest("Bad Request"),
+			Status: statusCode.BadRequest(translation.LocalizeMessage("Upsert.duplicated")),
 			Data:   nil,
 		}
 		return &reponseError, nil
@@ -170,9 +179,9 @@ func GetInventoryBranchs(params *types.ParamsInventoryBranch, userInfo middlewar
 			Name:        strings.Split(inventoryBranch.Name, "|")[0],
 			Description: inventoryBranch.Description,
 			CreatedBy:   &inventoryBranch.CreatedBy,
-			CreatedAt:   inventoryBranch.CreatedAt.String(),
+			CreatedAt:   inventoryBranch.CreatedAt.UTC().Format(time.DateTime),
 			UpdatedBy:   &inventoryBranch.UpdatedBy,
-			UpdatedAt:   inventoryBranch.UpdatedAt.String(),
+			UpdatedAt:   inventoryBranch.UpdatedAt.UTC().Format(time.DateTime),
 		}
 	}
 
@@ -203,9 +212,9 @@ func GetInventoryBranch(id *string) (*types.InventoryBranch, error) {
 		Name:        strings.Split(inventoryBranch.Name, "|")[0],
 		Description: inventoryBranch.Description,
 		CreatedBy:   &inventoryBranch.CreatedBy,
-		CreatedAt:   inventoryBranch.CreatedAt.String(),
+		CreatedAt:   inventoryBranch.CreatedAt.UTC().Format(time.DateTime),
 		UpdatedBy:   &inventoryBranch.UpdatedBy,
-		UpdatedAt:   inventoryBranch.UpdatedAt.String(),
+		UpdatedAt:   inventoryBranch.UpdatedAt.UTC().Format(time.DateTime),
 	}
 
 	return &inventoryBranchData, nil

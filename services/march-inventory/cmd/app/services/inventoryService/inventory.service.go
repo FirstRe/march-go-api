@@ -27,6 +27,14 @@ func UpsertInventory(input types.UpsertInventoryInput, userInfo middlewares.User
 	name := input.Name + "|" + input.InventoryBranchID + "|" + userInfo.UserInfo.ShopsID
 	gormDb.Repos.Model(&model.Inventory{}).Where("name = ? AND shops_Id = ?", name, userInfo.UserInfo.ShopsID).First(&findDup)
 
+	if input.Name == "" {
+		reponseError := types.MutationInventoryResponse{
+			Status: statusCode.BadRequest("name is required"),
+			Data:   nil,
+		}
+		return &reponseError, nil
+	}
+
 	if findDup.Name != "" && input.ID == nil {
 		reponseError := types.MutationInventoryResponse{
 			Status: statusCode.BadRequest(translation.LocalizeMessage("Upsert.duplicated")),
@@ -38,7 +46,7 @@ func UpsertInventory(input types.UpsertInventoryInput, userInfo middlewares.User
 	logctx.Logger(findDup, "findDup")
 	if input.ID != nil && findDup.Name != "" && *input.ID != findDup.ID {
 		reponseError := types.MutationInventoryResponse{
-			Status: statusCode.BadRequest("Bad Request"),
+			Status: statusCode.BadRequest(translation.LocalizeMessage("Upsert.duplicated")),
 			Data:   nil,
 		}
 		return &reponseError, nil
@@ -185,6 +193,11 @@ func GetInventories(params *types.ParamsInventory, userInfo middlewares.UserClai
 	}
 
 	query = query.Where("shops_id = ?", userInfo.UserInfo.ShopsID)
+	var count int64
+
+	if err := query.Order("created_at desc").Limit(limit).Offset(offset).Count(&count).Error; err != nil {
+		count = 0
+	}
 
 	result := query.Preload(clause.Associations).Order("created_at desc").Limit(limit).Offset(offset).Find(&inventories)
 
@@ -261,12 +274,12 @@ func GetInventories(params *types.ParamsInventory, userInfo middlewares.UserClai
 		}
 	}
 	logctx.Logger(inventories, "[log-api] inventories1")
-	var count int64
-	if err := gormDb.Repos.Model(&model.Inventory{}).Count(&count).Where("shops_id = ?", userInfo.UserInfo.ShopsID).Error; err != nil {
-		count = 0
-	}
+
 	totalRow := int(count)
 	totalPage := int(math.Ceil(float64(totalRow) / float64(limit)))
+
+	logctx.Logger(totalRow, "[log-api] totalRow")
+	logctx.Logger(totalPage, "[log-api] totalPage")
 
 	reponseData := types.ResponseInventories{
 		Inventories: inventoriesData,
@@ -328,8 +341,8 @@ func GetInventoryAllDeleted(userInfo middlewares.UserClaims) (*types.DeletedInve
 			Name:      &strings.Split(inventory.Name, "|")[0],
 			CreatedBy: &inventory.CreatedBy,
 			UpdatedBy: &inventory.UpdatedBy,
-			UpdatedAt: inventory.UpdatedAt.String(),
-			CreatedAt: inventory.CreatedAt.String(),
+			UpdatedAt: inventory.UpdatedAt.UTC().Format(time.DateTime),
+			CreatedAt: inventory.CreatedAt.UTC().Format(time.DateTime),
 		}
 	}
 
@@ -349,8 +362,8 @@ func GetInventoryAllDeleted(userInfo middlewares.UserClaims) (*types.DeletedInve
 			Name:      &strings.Split(inventoryType.Name, "|")[0],
 			CreatedBy: &inventoryType.CreatedBy,
 			UpdatedBy: &inventoryType.UpdatedBy,
-			UpdatedAt: inventoryType.UpdatedAt.String(),
-			CreatedAt: inventoryType.CreatedAt.String(),
+			UpdatedAt: inventoryType.UpdatedAt.UTC().Format(time.DateTime),
+			CreatedAt: inventoryType.CreatedAt.UTC().Format(time.DateTime),
 		}
 	}
 
@@ -370,8 +383,8 @@ func GetInventoryAllDeleted(userInfo middlewares.UserClaims) (*types.DeletedInve
 			Name:      &strings.Split(inventoryBrand.Name, "|")[0],
 			CreatedBy: &inventoryBrand.CreatedBy,
 			UpdatedBy: &inventoryBrand.UpdatedBy,
-			UpdatedAt: inventoryBrand.UpdatedAt.String(),
-			CreatedAt: inventoryBrand.CreatedAt.String(),
+			UpdatedAt: inventoryBrand.UpdatedAt.UTC().Format(time.DateTime),
+			CreatedAt: inventoryBrand.CreatedAt.UTC().Format(time.DateTime),
 		}
 	}
 
@@ -391,8 +404,8 @@ func GetInventoryAllDeleted(userInfo middlewares.UserClaims) (*types.DeletedInve
 			Name:      &strings.Split(inventoryBranch.Name, "|")[0],
 			CreatedBy: &inventoryBranch.CreatedBy,
 			UpdatedBy: &inventoryBranch.UpdatedBy,
-			UpdatedAt: inventoryBranch.UpdatedAt.String(),
-			CreatedAt: inventoryBranch.CreatedAt.String(),
+			UpdatedAt: inventoryBranch.UpdatedAt.UTC().Format(time.DateTime),
+			CreatedAt: inventoryBranch.CreatedAt.UTC().Format(time.DateTime),
 		}
 	}
 
@@ -441,9 +454,9 @@ func GetInventory(id *string, userInfo middlewares.UserClaims) (*types.Inventory
 		Name:        strings.Split(inventory.InventoryBrand.Name, "|")[0],
 		Description: inventory.InventoryBrand.Description,
 		CreatedBy:   &inventory.InventoryBrand.CreatedBy,
-		CreatedAt:   inventory.InventoryBrand.CreatedAt.String(),
+		CreatedAt:   inventory.InventoryBrand.CreatedAt.UTC().Format(time.DateTime),
 		UpdatedBy:   &inventory.InventoryBrand.UpdatedBy,
-		UpdatedAt:   inventory.InventoryBrand.UpdatedAt.String(),
+		UpdatedAt:   inventory.InventoryBrand.UpdatedAt.UTC().Format(time.DateTime),
 	}
 
 	inventoryBranch := types.InventoryBranch{
@@ -451,9 +464,9 @@ func GetInventory(id *string, userInfo middlewares.UserClaims) (*types.Inventory
 		Name:        strings.Split(inventory.InventoryBranch.Name, "|")[0],
 		Description: inventory.InventoryBranch.Description,
 		CreatedBy:   &inventory.InventoryBranch.CreatedBy,
-		CreatedAt:   inventory.InventoryBranch.CreatedAt.String(),
+		CreatedAt:   inventory.InventoryBranch.CreatedAt.UTC().Format(time.DateTime),
 		UpdatedBy:   &inventory.InventoryBranch.UpdatedBy,
-		UpdatedAt:   inventory.InventoryBranch.UpdatedAt.String(),
+		UpdatedAt:   inventory.InventoryBranch.UpdatedAt.UTC().Format(time.DateTime),
 	}
 
 	inventoryType := types.InventoryType{
@@ -461,9 +474,9 @@ func GetInventory(id *string, userInfo middlewares.UserClaims) (*types.Inventory
 		Name:        strings.Split(inventory.InventoryType.Name, "|")[0],
 		Description: inventory.InventoryType.Description,
 		CreatedBy:   &inventory.InventoryType.CreatedBy,
-		CreatedAt:   inventory.InventoryType.CreatedAt.String(),
+		CreatedAt:   inventory.InventoryType.CreatedAt.UTC().Format(time.DateTime),
 		UpdatedBy:   &inventory.InventoryType.UpdatedBy,
-		UpdatedAt:   inventory.InventoryType.UpdatedAt.String(),
+		UpdatedAt:   inventory.InventoryType.UpdatedAt.UTC().Format(time.DateTime),
 	}
 
 	expiryDateStr := ""

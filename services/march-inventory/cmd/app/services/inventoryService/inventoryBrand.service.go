@@ -11,6 +11,7 @@ import (
 	"march-inventory/cmd/app/graph/types"
 	translation "march-inventory/cmd/app/i18n"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -21,6 +22,14 @@ func UpsertInventoryBrand(input *types.UpsertInventoryBrandInput, userInfo middl
 	findDup := model.InventoryBrand{}
 	typeName := input.Name + "|" + userInfo.UserInfo.ShopsID
 	gormDb.Repos.Model(&model.InventoryBrand{}).Where("name = ? AND shops_Id = ?", typeName, userInfo.UserInfo.ShopsID).First(&findDup)
+
+	if input.Name == "" {
+		reponseError := types.MutationInventoryBrandResponse{
+			Status: statusCode.BadRequest("name is required"),
+			Data:   nil,
+		}
+		return &reponseError, nil
+	}
 
 	if findDup.Name != "" && input.ID == nil {
 		reponseError := types.MutationInventoryBrandResponse{
@@ -33,7 +42,7 @@ func UpsertInventoryBrand(input *types.UpsertInventoryBrandInput, userInfo middl
 	logctx.Logger(findDup, "findDup")
 	if input.ID != nil && findDup.Name != "" && *input.ID != findDup.ID {
 		reponseError := types.MutationInventoryBrandResponse{
-			Status: statusCode.BadRequest("Bad Request"),
+			Status: statusCode.BadRequest(translation.LocalizeMessage("Upsert.duplicated")),
 			Data:   nil,
 		}
 		return &reponseError, nil
@@ -170,9 +179,9 @@ func GetInventoryBrands(params *types.ParamsInventoryBrand, userInfo middlewares
 			Name:        strings.Split(inventoryBrand.Name, "|")[0],
 			Description: inventoryBrand.Description,
 			CreatedBy:   &inventoryBrand.CreatedBy,
-			CreatedAt:   inventoryBrand.CreatedAt.String(),
+			CreatedAt:   inventoryBrand.CreatedAt.UTC().Format(time.DateTime),
 			UpdatedBy:   &inventoryBrand.UpdatedBy,
-			UpdatedAt:   inventoryBrand.UpdatedAt.String(),
+			UpdatedAt:   inventoryBrand.UpdatedAt.UTC().Format(time.DateTime),
 		}
 	}
 
@@ -204,9 +213,9 @@ func GetInventoryBrand(id *string) (*types.InventoryBrand, error) {
 		Name:        strings.Split(inventoryBrand.Name, "|")[0],
 		Description: inventoryBrand.Description,
 		CreatedBy:   &inventoryBrand.CreatedBy,
-		CreatedAt:   inventoryBrand.CreatedAt.String(),
+		CreatedAt:   inventoryBrand.CreatedAt.UTC().Format(time.DateTime),
 		UpdatedBy:   &inventoryBrand.UpdatedBy,
-		UpdatedAt:   inventoryBrand.UpdatedAt.String(),
+		UpdatedAt:   inventoryBrand.UpdatedAt.UTC().Format(time.DateTime),
 	}
 
 	return &inventoryBrandData, nil

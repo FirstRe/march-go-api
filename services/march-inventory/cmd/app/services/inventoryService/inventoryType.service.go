@@ -11,6 +11,7 @@ import (
 	"march-inventory/cmd/app/graph/types"
 	translation "march-inventory/cmd/app/i18n"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -24,6 +25,14 @@ func UpsertInventoryType(input *types.UpsertInventoryTypeInput, userInfo middlew
 	typeName := input.Name + "|" + userInfo.UserInfo.ShopsID
 	gormDb.Repos.Model(&model.InventoryType{}).Where("name = ? AND shops_Id = ?", typeName, userInfo.UserInfo.ShopsID).First(&findDup)
 
+	if input.Name == "" {
+		reponseError := types.MutationInventoryResponse{
+			Status: statusCode.BadRequest("name is required"),
+			Data:   nil,
+		}
+		return &reponseError, nil
+	}
+
 	if findDup.Name != "" && input.ID == nil {
 		reponseError := types.MutationInventoryResponse{
 			Status: statusCode.BadRequest(translation.LocalizeMessage("Upsert.duplicated")),
@@ -35,7 +44,7 @@ func UpsertInventoryType(input *types.UpsertInventoryTypeInput, userInfo middlew
 	logctx.Logger(findDup, "findDup")
 	if input.ID != nil && findDup.Name != "" && *input.ID != findDup.ID {
 		reponseError := types.MutationInventoryResponse{
-			Status: statusCode.BadRequest("Bad Request"),
+			Status: statusCode.BadRequest(translation.LocalizeMessage("Upsert.duplicated")),
 			Data:   nil,
 		}
 		return &reponseError, nil
@@ -172,9 +181,9 @@ func GetInventoryTypes(params *types.ParamsInventoryType, userInfo middlewares.U
 			Name:        strings.Split(inventoryType.Name, "|")[0],
 			Description: inventoryType.Description,
 			CreatedBy:   &inventoryType.CreatedBy,
-			CreatedAt:   inventoryType.CreatedAt.String(),
+			CreatedAt:   inventoryType.CreatedAt.UTC().Format(time.DateTime),
 			UpdatedBy:   &inventoryType.UpdatedBy,
-			UpdatedAt:   inventoryType.UpdatedAt.String(),
+			UpdatedAt:   inventoryType.UpdatedAt.UTC().Format(time.DateTime),
 		}
 	}
 
@@ -211,9 +220,9 @@ func GetInventoryType(id *string) (*types.InventoryTypeResponse, error) {
 		Name:        strings.Split(inventoryType.Name, "|")[0],
 		Description: inventoryType.Description,
 		CreatedBy:   &inventoryType.CreatedBy,
-		CreatedAt:   inventoryType.CreatedAt.String(),
+		CreatedAt:   inventoryType.CreatedAt.UTC().Format(time.DateTime),
 		UpdatedBy:   &inventoryType.UpdatedBy,
-		UpdatedAt:   inventoryType.UpdatedAt.String(),
+		UpdatedAt:   inventoryType.UpdatedAt.UTC().Format(time.DateTime),
 	}
 
 	reponsePass := types.InventoryTypeResponse{
