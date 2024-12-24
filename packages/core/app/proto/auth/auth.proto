@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+
+option go_package ="../../packages/core/app/grpc";
+
+message CreateSubUserRequest {
+  string role           = 1;
+  string username        = 2;
+  string email = 3;
+  string shopId = 4;
+  string userId = 5;
+}
+message GetPermissionrRequest {
+  string shopsId = 1;
+
+}
+
+message CreateSubUserResponse {
+  string id           = 1;
+}
+
+message GetPermissionResponse {
+  Shop shop = 1;
+  repeated Function functions = 2;
+  repeated Task tasks = 3;
+}
+
+message Shop {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string createdBy = 4;
+    string updatedBy = 5;
+    string createdAt = 6;
+    string updatedAt = 7;
+    repeated Group groups = 8;
+    repeated User users = 9;
+}
+
+message Group {
+    string id = 1;
+    string name = 2;
+    string shopsId = 3;
+    repeated GroupFunction groupFunctions = 4;
+    repeated GroupTask groupTasks = 5;
+}
+
+message GroupFunction {
+    string id = 1;
+    string name = 2;
+    string functionId = 3;
+    string groupId = 4;
+    bool create = 5;
+    bool view = 6;
+    bool update = 7;
+}
+
+message GroupTask {
+    string id = 1;
+    string name = 2;
+    string groupId = 3;
+    string taskId = 4;
+    string shopsId = 5;
+    string createdBy = 6;
+    string updatedBy = 7;
+    string createdAt = 8;
+    string updatedAt = 9;
+}
+
+message User {
+    string id = 1;
+    string role = 2;
+    string shopsId = 3;
+    string username = 4;
+    string email = 5;
+    string picture = 6;
+    string createdBy = 7;
+    bool isSuperAdmin = 8;
+    bool isRegistered = 9;
+}
+
+message Function {
+    string id = 1;
+    string name = 2;
+}
+
+message Task {
+    string id = 1;
+    string name = 2;
+    string functionId = 3;
+    string description = 4;
+}
+
+message RevokeSubUserRequest {
+      string userId = 1;
+      string updatedBy = 2;
+}
+
+message RemoveSubUserRequest {
+      string userId = 1;
+      string updatedBy = 2;
+}
+
+message UpdateRoleUserRequest {
+      string userId = 1;
+      string role = 2;
+      string updatedBy = 3;
+}
+
+
+service AuthGrpcService {
+  rpc createSubUser(CreateSubUserRequest) returns (CreateSubUserResponse) {}
+  rpc revokeSubUser(RevokeSubUserRequest) returns (CreateSubUserResponse) {}
+  rpc removeSubUser(RemoveSubUserRequest) returns (CreateSubUserResponse) {}
+  rpc updateRoleUser(UpdateRoleUserRequest) returns (CreateSubUserResponse) {}
+  rpc getPermission(GetPermissionrRequest)  returns (GetPermissionResponse) {}
+}
+

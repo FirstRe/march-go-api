@@ -11,6 +11,8 @@ import (
 	translation "march-inventory/cmd/app/i18n"
 	"march-inventory/cmd/app/resolvers"
 
+	grpcCilent "march-inventory/cmd/app/common/grpc"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -87,6 +89,12 @@ func main() {
 	r.Use(middlewares.AuthMiddleware())
 	r.POST("/graphql", graphqlHandler())
 	r.GET("/graphql/playground", playgroundHandler())
+
+	//grpc cilent
+	conn := grpcCilent.Init()
+
+	defer conn.Close()
+	//grpc cilent
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(r.Run("localhost:" + port))

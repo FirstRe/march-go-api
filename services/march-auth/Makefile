@@ -2,6 +2,7 @@
 
 # Define variables
 PRISMA_CMD = go run github.com/steebchen/prisma-client-go
+
 init:
 	go mod init
 
@@ -16,6 +17,9 @@ start:
 
 gen:
 	go run github.com/99designs/gqlgen generate
+
+proto-gen:
+	protoc -I=../../packages/core/app/proto --go_out=. --go-grpc_out=. ../../packages/core/app/proto/auth/*.proto
 
 prisma-push:
 	go run github.com/steebchen/prisma-client-go db push --schema=./cmd/app/prisma/schema.prisma

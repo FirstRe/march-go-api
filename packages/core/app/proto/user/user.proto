@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package ="user_grpc";
+
+message InventoryName {
+  string id = 1;
+  string name = 2;
+}
+
+message InventoryNameList {
+  repeated InventoryName inventoryName = 1;
+}
+
+service InventoryGrpcService {
+  rpc getInventoryNames(EmptyRequest) returns (InventoryNameList) {}
+  rpc tester(EmptyRequest) returns (InventoryNameList) {}
+}
+
+message EmptyRequest {}

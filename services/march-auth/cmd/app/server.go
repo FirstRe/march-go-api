@@ -10,6 +10,10 @@ import (
 	"march-auth/cmd/app/graph/model"
 	"march-auth/cmd/app/resolvers"
 	"march-auth/cmd/app/services/uam"
+	"net"
+
+	pb "core/app/grpc"
+	authService "march-auth/cmd/app/services/auth"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -19,9 +23,11 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 )
 
 const defaultPort = "8080"
+const defaultGrpcPort = "50080"
 
 func initConfig() {
 	err := godotenv.Load(".env")
@@ -63,8 +69,12 @@ func main() {
 
 	initConfig()
 	port := viper.GetString("PORT")
+	grpcPort := viper.GetString("GRPCPORT")
 	if port == "" {
 		port = defaultPort
+	}
+	if grpcPort == "" {
+		grpcPort = defaultGrpcPort
 	}
 
 	db, err := gormDb.Initialize()
@@ -96,7 +106,30 @@ func main() {
 	r.POST("/graphql", graphqlHandler())
 	r.GET("/graphql/playground", playgroundHandler())
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(r.Run("localhost:" + port))
+	// log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	// log.Fatal(r.Run("localhost:" + port))
+
+	go func() {
+		log.Printf("GraphQL server is running at http://localhost:%s/graphql/playground", port)
+		if err := r.Run("localhost:" + port); err != nil {
+			log.Fatalf("Failed to start GraphQL server: %v", err)
+		}
+	}()
+
+	// Setup gRPC server
+	lis, err := net.Listen("tcp", "localhost:"+grpcPort)
+	if err != nil {
+		log.Fatalf("Failed to listen on gRPC port %s: %v", grpcPort, err)
+	}
+	grpcServer := grpc.NewServer()
+	pb.RegisterAuthGrpcServiceServer(grpcServer, &authService.Server{})
+
+	// Start the gRPC server
+	log.Printf("gRPC server is running on port %s", grpcPort)
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("Failed to start gRPC server: %v", err)
+	}
+
+	select {}
 
 }

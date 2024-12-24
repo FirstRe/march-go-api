@@ -1,6 +1,7 @@
 package inventoryService
 
 import (
+	"context"
 	"core/app/helper"
 	"core/app/middlewares"
 	"errors"
@@ -12,6 +13,10 @@ import (
 	translation "march-inventory/cmd/app/i18n"
 	"strings"
 	"time"
+
+	grpcAuth "march-inventory/cmd/app/common/grpc/auth"
+
+	// pb "core/app/grpc"
 
 	"gorm.io/gorm"
 )
@@ -160,6 +165,15 @@ func DeleteInventoryType(id string, userInfo middlewares.UserClaims) (*types.Mut
 func GetInventoryTypes(params *types.ParamsInventoryType, userInfo middlewares.UserClaims) (*types.InventoryTypesResponse, error) {
 	logctx := helper.LogContext(ClassName, "GetInventoryTypes")
 	logctx.Logger([]interface{}{}, "id")
+	_, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	//grpc
+	shopIds := "984d0d87-7d74-45c5-9d94-6ebcb74a98de"
+	r, err := grpcAuth.GetPermission(shopIds)
+	if err != nil {
+		log.Fatalf("could not greet: %v", err)
+	}
+	log.Printf("Greeting22: %s", r.GetShop())
 
 	inventoryTypes := []model.InventoryType{}
 
