@@ -1,0 +1,26 @@
+auth:
+  rest:
+    port: 8080
+    url: http://localhost:8080
+  grpc:
+    url: 0.0.0.0:5005
+    port: 5005
+  graphql:
+    url: /api/v1/auth/graphql
+inventory:
+  rest:
+    port: 8081
+    url: http://localhost:8081
+  grpc:
+    url: 0.0.0.0:5006
+  graphql:
+    url: /api/v1/inventory/graphql
+user:
+  rest:
+    port: 3003
+    url: http://localhost:3003
+  grpc:
+    url: 0.0.0.0:5003
+    port: 5003
+  graphql:
+    url: /api/v1/user/graphql

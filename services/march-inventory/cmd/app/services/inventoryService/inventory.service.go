@@ -14,6 +14,7 @@ import (
 	translation "march-inventory/cmd/app/i18n"
 	"math"
 	"strings"
+	"sync"
 	"time"
 
 	"gorm.io/gorm"
@@ -193,21 +194,59 @@ func GetInventories(params *types.ParamsInventory, userInfo middlewares.UserClai
 	}
 
 	query = query.Where("shops_id = ?", userInfo.UserInfo.ShopsID)
-	var count int64
 
-	if err := query.Order("created_at desc").Limit(limit).Offset(offset).Count(&count).Error; err != nil {
-		count = 0
-	}
+	var wg sync.WaitGroup
 
-	result := query.Preload(clause.Associations).Order("created_at desc").Limit(limit).Offset(offset).Find(&inventories)
+	errorCh := make(chan error, 2)
+	countCh := make(chan int64, 1)
+	inventoryCh := make(chan []model.Inventory, 1)
 
-	if result.Error != nil {
-		logctx.Logger([]interface{}{result.Error}, "err GetInventories Model Data")
-		reponseError := types.InventoriesResponse{
-			Status: statusCode.InternalError(""),
-			Data:   nil,
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(countCh)
+		var count int64
+
+		if err := query.Count(&count).Error; err != nil {
+			logctx.Logger(err, "[log-api] countsserr")
+			errorCh <- err
+			countCh <- 0
 		}
-		return &reponseError, nil
+		countCh <- count
+		logctx.Logger(count, "[log-api] countss")
+	}()
+
+	totalRow := int(<-countCh)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(inventoryCh)
+		if err := query.Preload(clause.Associations).Order("created_at desc").Limit(limit).Offset(offset).Find(&inventories).Error; err != nil {
+			errorCh <- err
+		}
+		inventoryCh <- inventories
+	}()
+
+	inventories = <-inventoryCh
+
+	wg.Wait()
+	close(errorCh)
+
+	for i := 0; i < 2; i++ {
+		select {
+		case err := <-errorCh:
+			if err != nil {
+				logctx.Logger([]interface{}{err}, "err GetInventories Model Data")
+				reponseError := types.InventoriesResponse{
+					Status: statusCode.InternalError(""),
+					Data:   nil,
+				}
+				return &reponseError, nil
+			}
+		default:
+
+		}
 	}
 
 	logctx.Logger(inventories, "[log-api] inventories")
@@ -275,7 +314,6 @@ func GetInventories(params *types.ParamsInventory, userInfo middlewares.UserClai
 	}
 	logctx.Logger(inventories, "[log-api] inventories1")
 
-	totalRow := int(count)
 	totalPage := int(math.Ceil(float64(totalRow) / float64(limit)))
 
 	logctx.Logger(totalRow, "[log-api] totalRow")
@@ -322,103 +360,166 @@ func GetInventoryNames(userInfo middlewares.UserClaims) (*types.InventoryNameRes
 }
 
 func GetInventoryAllDeleted(userInfo middlewares.UserClaims) (*types.DeletedInventoryResponse, error) {
+	start := time.Now()
 	logctx := LogContext(ClassName, "GetInventoryAllDeleted")
 	logctx.Logger(userInfo, "userInfo")
 
-	inventories := []model.Inventory{}
-	gormDb.Repos.
-		Where("shops_id = ? AND deleted = ?", userInfo.UserInfo.ShopsID, true).
-		Find(&inventories).
-		Select("id", "name").
-		Order("updated_at desc")
+	var wg sync.WaitGroup
+	errChan := make(chan error, 4)
 
-	logctx.Logger(inventories, "inventories")
-	deletedInventory := make([]*types.DeletedInventoryType, len(inventories))
+	// Channels for concurrent data
+	chInventory := make(chan []*types.DeletedInventoryType, 1)
+	chType := make(chan []*types.DeletedInventoryType, 1)
+	chBrand := make(chan []*types.DeletedInventoryType, 1)
+	chBranch := make(chan []*types.DeletedInventoryType, 1)
 
-	for d, inventory := range inventories {
-		deletedInventory[d] = &types.DeletedInventoryType{
-			ID:        &inventory.ID,
-			Name:      &strings.Split(inventory.Name, "|")[0],
-			CreatedBy: &inventory.CreatedBy,
-			UpdatedBy: &inventory.UpdatedBy,
-			UpdatedAt: inventory.UpdatedAt.UTC().Format(time.DateTime),
-			CreatedAt: inventory.CreatedAt.UTC().Format(time.DateTime),
+	// Goroutine for Inventories
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(chInventory)
+
+		inventories := []model.Inventory{}
+		if err := gormDb.Repos.
+			Where("shops_id = ? AND deleted = ?", userInfo.UserInfo.ShopsID, true).
+			Select("id", "name").
+			Order("updated_at desc").
+			Find(&inventories).Error; err != nil {
+			errChan <- err
+			return
 		}
-	}
 
-	inventoryTypes := []model.InventoryType{}
-	gormDb.Repos.
-		Where("shops_id = ? AND deleted = ?", userInfo.UserInfo.ShopsID, true).
-		Find(&inventoryTypes).
-		Select("id", "name").
-		Order("updated_at desc")
-
-	logctx.Logger(inventoryTypes, "inventoryTypes")
-	deletedInventoryType := make([]*types.DeletedInventoryType, len(inventoryTypes))
-
-	for d, inventoryType := range inventoryTypes {
-		deletedInventoryType[d] = &types.DeletedInventoryType{
-			ID:        &inventoryType.ID,
-			Name:      &strings.Split(inventoryType.Name, "|")[0],
-			CreatedBy: &inventoryType.CreatedBy,
-			UpdatedBy: &inventoryType.UpdatedBy,
-			UpdatedAt: inventoryType.UpdatedAt.UTC().Format(time.DateTime),
-			CreatedAt: inventoryType.CreatedAt.UTC().Format(time.DateTime),
+		logctx.Logger(inventories, "inventories")
+		deletedInventory := make([]*types.DeletedInventoryType, len(inventories))
+		for d, inventory := range inventories {
+			deletedInventory[d] = &types.DeletedInventoryType{
+				ID:        &inventory.ID,
+				Name:      &strings.Split(inventory.Name, "|")[0],
+				CreatedBy: &inventory.CreatedBy,
+				UpdatedBy: &inventory.UpdatedBy,
+				UpdatedAt: inventory.UpdatedAt.UTC().Format(time.DateTime),
+				CreatedAt: inventory.CreatedAt.UTC().Format(time.DateTime),
+			}
 		}
-	}
+		chInventory <- deletedInventory
+	}()
 
-	inventoryBrands := []model.InventoryBrand{}
-	gormDb.Repos.
-		Where("shops_id = ? AND deleted = ?", userInfo.UserInfo.ShopsID, true).
-		Find(&inventoryBrands).
-		Select("id", "name").
-		Order("updated_at desc")
+	// Goroutine for Types
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(chType)
 
-	logctx.Logger(inventoryBrands, "inventoryBrands")
-	deletedInventoryBrand := make([]*types.DeletedInventoryType, len(inventoryBrands))
-
-	for d, inventoryBrand := range inventoryBrands {
-		deletedInventoryBrand[d] = &types.DeletedInventoryType{
-			ID:        &inventoryBrand.ID,
-			Name:      &strings.Split(inventoryBrand.Name, "|")[0],
-			CreatedBy: &inventoryBrand.CreatedBy,
-			UpdatedBy: &inventoryBrand.UpdatedBy,
-			UpdatedAt: inventoryBrand.UpdatedAt.UTC().Format(time.DateTime),
-			CreatedAt: inventoryBrand.CreatedAt.UTC().Format(time.DateTime),
+		inventoryTypes := []model.InventoryType{}
+		if err := gormDb.Repos.
+			Where("shops_id = ? AND deleted = ?", userInfo.UserInfo.ShopsID, true).
+			Select("id", "name").
+			Order("updated_at desc").
+			Find(&inventoryTypes).Error; err != nil {
+			errChan <- err
+			return
 		}
-	}
 
-	inventoryBranchs := []model.InventoryBranch{}
-	gormDb.Repos.
-		Where("shops_id = ? AND deleted = ?", userInfo.UserInfo.ShopsID, true).
-		Find(&inventoryBranchs).
-		Select("id", "name").
-		Order("updated_at desc")
-
-	logctx.Logger(inventoryBranchs, "inventoryBranchs")
-	deletedInventoryBranch := make([]*types.DeletedInventoryType, len(inventoryBranchs))
-
-	for d, inventoryBranch := range inventoryBranchs {
-		deletedInventoryBranch[d] = &types.DeletedInventoryType{
-			ID:        &inventoryBranch.ID,
-			Name:      &strings.Split(inventoryBranch.Name, "|")[0],
-			CreatedBy: &inventoryBranch.CreatedBy,
-			UpdatedBy: &inventoryBranch.UpdatedBy,
-			UpdatedAt: inventoryBranch.UpdatedAt.UTC().Format(time.DateTime),
-			CreatedAt: inventoryBranch.CreatedAt.UTC().Format(time.DateTime),
+		logctx.Logger(inventoryTypes, "inventoryTypes")
+		deletedInventoryType := make([]*types.DeletedInventoryType, len(inventoryTypes))
+		for d, inventoryType := range inventoryTypes {
+			deletedInventoryType[d] = &types.DeletedInventoryType{
+				ID:        &inventoryType.ID,
+				Name:      &strings.Split(inventoryType.Name, "|")[0],
+				CreatedBy: &inventoryType.CreatedBy,
+				UpdatedBy: &inventoryType.UpdatedBy,
+				UpdatedAt: inventoryType.UpdatedAt.UTC().Format(time.DateTime),
+				CreatedAt: inventoryType.CreatedAt.UTC().Format(time.DateTime),
+			}
 		}
+		chType <- deletedInventoryType
+	}()
+
+	// Goroutine for Brands
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(chBrand)
+
+		inventoryBrands := []model.InventoryBrand{}
+		if err := gormDb.Repos.
+			Where("shops_id = ? AND deleted = ?", userInfo.UserInfo.ShopsID, true).
+			Select("id", "name").
+			Order("updated_at desc").
+			Find(&inventoryBrands).Error; err != nil {
+			errChan <- err
+			return
+		}
+
+		logctx.Logger(inventoryBrands, "inventoryBrands")
+		deletedInventoryBrand := make([]*types.DeletedInventoryType, len(inventoryBrands))
+		for d, inventoryBrand := range inventoryBrands {
+			deletedInventoryBrand[d] = &types.DeletedInventoryType{
+				ID:        &inventoryBrand.ID,
+				Name:      &strings.Split(inventoryBrand.Name, "|")[0],
+				CreatedBy: &inventoryBrand.CreatedBy,
+				UpdatedBy: &inventoryBrand.UpdatedBy,
+				UpdatedAt: inventoryBrand.UpdatedAt.UTC().Format(time.DateTime),
+				CreatedAt: inventoryBrand.CreatedAt.UTC().Format(time.DateTime),
+			}
+		}
+		chBrand <- deletedInventoryBrand
+	}()
+
+	// Goroutine for Branches
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(chBranch)
+
+		inventoryBranches := []model.InventoryBranch{}
+		if err := gormDb.Repos.
+			Where("shops_id = ? AND deleted = ?", userInfo.UserInfo.ShopsID, true).
+			Select("id", "name").
+			Order("updated_at desc").
+			Find(&inventoryBranches).Error; err != nil {
+			errChan <- err
+			return
+		}
+
+		logctx.Logger(inventoryBranches, "inventoryBranches")
+		deletedInventoryBranch := make([]*types.DeletedInventoryType, len(inventoryBranches))
+		for d, inventoryBranch := range inventoryBranches {
+			deletedInventoryBranch[d] = &types.DeletedInventoryType{
+				ID:        &inventoryBranch.ID,
+				Name:      &strings.Split(inventoryBranch.Name, "|")[0],
+				CreatedBy: &inventoryBranch.CreatedBy,
+				UpdatedBy: &inventoryBranch.UpdatedBy,
+				UpdatedAt: inventoryBranch.UpdatedAt.UTC().Format(time.DateTime),
+				CreatedAt: inventoryBranch.CreatedAt.UTC().Format(time.DateTime),
+			}
+		}
+		chBranch <- deletedInventoryBranch
+	}()
+
+	wg.Wait()
+	close(errChan)
+
+	select {
+	case err := <-errChan:
+		if err != nil {
+			return nil, err
+		}
+	default:
 	}
 
 	response := types.DeletedInventoryResponse{
 		Data: &types.DeletedInventory{
-			Inventory: deletedInventory,
-			Type:      deletedInventoryType,
-			Brand:     deletedInventoryBrand,
-			Branch:    deletedInventoryBranch,
+			Inventory: <-chInventory,
+			Type:      <-chType,
+			Brand:     <-chBrand,
+			Branch:    <-chBranch,
 		},
 		Status: statusCode.Success("OK"),
 	}
 
+	elapsed := time.Since(start)
+	log.Println("Execution time:", elapsed)
 	return &response, nil
 }
 
@@ -449,35 +550,56 @@ func GetInventory(id *string, userInfo middlewares.UserClaims) (*types.Inventory
 		return &reponseError, nil
 	}
 
-	inventoryBrand := types.InventoryBrand{
-		ID:          &inventory.InventoryBrand.ID,
-		Name:        strings.Split(inventory.InventoryBrand.Name, "|")[0],
-		Description: inventory.InventoryBrand.Description,
-		CreatedBy:   &inventory.InventoryBrand.CreatedBy,
-		CreatedAt:   inventory.InventoryBrand.CreatedAt.UTC().Format(time.DateTime),
-		UpdatedBy:   &inventory.InventoryBrand.UpdatedBy,
-		UpdatedAt:   inventory.InventoryBrand.UpdatedAt.UTC().Format(time.DateTime),
-	}
+	var wg sync.WaitGroup
 
-	inventoryBranch := types.InventoryBranch{
-		ID:          &inventory.InventoryBranch.ID,
-		Name:        strings.Split(inventory.InventoryBranch.Name, "|")[0],
-		Description: inventory.InventoryBranch.Description,
-		CreatedBy:   &inventory.InventoryBranch.CreatedBy,
-		CreatedAt:   inventory.InventoryBranch.CreatedAt.UTC().Format(time.DateTime),
-		UpdatedBy:   &inventory.InventoryBranch.UpdatedBy,
-		UpdatedAt:   inventory.InventoryBranch.UpdatedAt.UTC().Format(time.DateTime),
-	}
+	var inventoryBrand = types.InventoryBrand{}
 
-	inventoryType := types.InventoryType{
-		ID:          &inventory.InventoryType.ID,
-		Name:        strings.Split(inventory.InventoryType.Name, "|")[0],
-		Description: inventory.InventoryType.Description,
-		CreatedBy:   &inventory.InventoryType.CreatedBy,
-		CreatedAt:   inventory.InventoryType.CreatedAt.UTC().Format(time.DateTime),
-		UpdatedBy:   &inventory.InventoryType.UpdatedBy,
-		UpdatedAt:   inventory.InventoryType.UpdatedAt.UTC().Format(time.DateTime),
-	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		inventoryBrand = types.InventoryBrand{
+			ID:          &inventory.InventoryBrand.ID,
+			Name:        strings.Split(inventory.InventoryBrand.Name, "|")[0],
+			Description: inventory.InventoryBrand.Description,
+			CreatedBy:   &inventory.InventoryBrand.CreatedBy,
+			CreatedAt:   inventory.InventoryBrand.CreatedAt.UTC().Format(time.DateTime),
+			UpdatedBy:   &inventory.InventoryBrand.UpdatedBy,
+			UpdatedAt:   inventory.InventoryBrand.UpdatedAt.UTC().Format(time.DateTime),
+		}
+	}()
+
+	var inventoryBranch = types.InventoryBranch{}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		inventoryBranch = types.InventoryBranch{
+			ID:          &inventory.InventoryBranch.ID,
+			Name:        strings.Split(inventory.InventoryBranch.Name, "|")[0],
+			Description: inventory.InventoryBranch.Description,
+			CreatedBy:   &inventory.InventoryBranch.CreatedBy,
+			CreatedAt:   inventory.InventoryBranch.CreatedAt.UTC().Format(time.DateTime),
+			UpdatedBy:   &inventory.InventoryBranch.UpdatedBy,
+			UpdatedAt:   inventory.InventoryBranch.UpdatedAt.UTC().Format(time.DateTime),
+		}
+	}()
+
+	var inventoryType = types.InventoryType{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		inventoryType = types.InventoryType{
+			ID:          &inventory.InventoryType.ID,
+			Name:        strings.Split(inventory.InventoryType.Name, "|")[0],
+			Description: inventory.InventoryType.Description,
+			CreatedBy:   &inventory.InventoryType.CreatedBy,
+			CreatedAt:   inventory.InventoryType.CreatedAt.UTC().Format(time.DateTime),
+			UpdatedBy:   &inventory.InventoryType.UpdatedBy,
+			UpdatedAt:   inventory.InventoryType.UpdatedAt.UTC().Format(time.DateTime),
+		}
+	}()
+
+	wg.Wait()
 
 	expiryDateStr := ""
 	if inventory.ExpiryDate != nil {

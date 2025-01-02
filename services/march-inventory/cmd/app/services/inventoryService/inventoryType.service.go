@@ -169,7 +169,7 @@ func GetInventoryTypes(params *types.ParamsInventoryType, userInfo middlewares.U
 	defer cancel()
 	//grpc
 	shopIds := "984d0d87-7d74-45c5-9d94-6ebcb74a98de"
-	r, err := grpcAuth.GetPermission(shopIds)
+	r, err := grpcAuth.GetPermission(shopIds, "token")
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}

@@ -4,4 +4,5 @@ use (
 	./packages/core
 	./services/march-auth
 	./services/march-inventory
+	./services/march-user
 )

@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	// "log"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/spf13/viper"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
@@ -83,8 +83,8 @@ func validateDeviceId(
 	userTask []string,
 	scopes []*string) (bool, string) {
 	l := helper.LogContext("AuthMiddleware", "validateDeviceId")
-	url := viper.GetString("UAM_URL")
-	deviceId, err := deviceIdCheckPost(url, accessToken)
+	url := os.Getenv("UAM_URL")
+	deviceId, err := DeviceIdCheckPost(url, accessToken)
 	log.Printf("errLog: %+v", err)
 	if err != nil {
 		return false, "Unauthorized Device"
@@ -108,7 +108,7 @@ func validateDeviceId(
 
 }
 
-func deviceIdCheckPost(url string, accessToken string) (*string, error) {
+func DeviceIdCheckPost(url string, accessToken string) (*string, error) {
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(nil))
 	if err != nil {
 		return nil, fmt.Errorf("Error creating request:", err)

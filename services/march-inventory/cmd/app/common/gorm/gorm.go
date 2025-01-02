@@ -2,8 +2,8 @@ package gormDb
 
 import (
 	"march-inventory/cmd/app/graph/model"
+	"os"
 
-	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -14,7 +14,7 @@ var InventoryType *gorm.DB
 var InventoryBrand *gorm.DB
 
 func Initialize() (*gorm.DB, error) {
-	dsn := viper.GetString("DATABASE_URL")
+	dsn := os.Getenv("DATABASE_URL")
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger:                 logger.Default.LogMode(logger.Info),
 		PrepareStmt:            true,

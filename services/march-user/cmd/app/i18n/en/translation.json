@@ -1,0 +1,14 @@
+{
+  "BadRequest": {
+    "revoke": "Revoke|Revoke Failed",
+    "remove": "Remove|Remove Failed",
+    "update": "Update|Update Failed",
+    "invite": "Invite|Invite Failed"
+  },
+  "Success": {
+    "revoke": "Revoke|Revoke Success",
+    "remove": "Remove|Remove Success",
+    "update": "Update|Update Success",
+    "invite": "Invite|Invite Success"
+  }
+}

@@ -19,8 +19,8 @@ type Server struct {
 }
 
 func (s *Server) GetPermission(ctx context.Context, in *pb.GetPermissionrRequest) (*pb.GetPermissionResponse, error) {
-	logctx := helper.LogContext(ClassNameGrpc, "UpsertInventory")
-	logctx.Logger(in.ShopsId, "[error-api] ShopsIdssss")
+	logctx := helper.LogContext(ClassNameGrpc, "GetPermission")
+	logctx.Logger(in.ShopsId, "[error-api] GetPermission")
 	shop := model.Shop{}
 	if err := gormDb.Repos.Where("id = ?", in.ShopsId).First(&shop).Error; err != nil {
 		logctx.Logger(err.Error(), "[error-api] SignOut")

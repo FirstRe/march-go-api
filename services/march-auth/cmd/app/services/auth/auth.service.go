@@ -14,12 +14,12 @@ import (
 	"march-auth/cmd/app/graph/types"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
-	"github.com/spf13/viper"
 	"gorm.io/gorm/clause"
 )
 
@@ -42,11 +42,11 @@ func SignInOAuth(code string) (*types.Token, error) {
 	}
 
 	data := url.Values{}
-	data.Set("client_id", viper.GetString("GOOGLE_CLIENT_ID"))
-	data.Set("client_secret", viper.GetString("GOOGLE_SECRET"))
+	data.Set("client_id", os.Getenv("GOOGLE_CLIENT_ID"))
+	data.Set("client_secret", os.Getenv("GOOGLE_SECRET"))
 	data.Set("code", code)
 	data.Set("grant_type", "authorization_code")
-	data.Set("redirect_uri", viper.GetString("REDIRECT_URL"))
+	data.Set("redirect_uri", os.Getenv("REDIRECT_URL"))
 
 	logctx.Logger(data, "data")
 
@@ -186,7 +186,6 @@ func TokenExpire(refreshToken string) (*types.Token, error) {
 		Preload("Group.GroupTasks.Task").
 		Preload("Group.Shop").
 		Where("id = ?", decode.ID).Find(user)
-
 
 	if user.RefreshToken != nil && refreshToken != *user.RefreshToken || *user.DeviceID != decode.DeviceId {
 		gormDb.Repos.Model(&model.User{}).Where("id = ?", user.ID).Update("device_id", nil)

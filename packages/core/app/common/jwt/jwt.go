@@ -3,9 +3,9 @@ package jwt
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/spf13/viper"
 )
 
 type authString string
@@ -39,13 +39,13 @@ var jwtSecretRef = []byte(getJwtSecret(false))
 
 func getJwtSecret(acc bool) string {
 	if acc == true {
-		secret := viper.GetString("JWT_SECRET")
+		secret := os.Getenv("JWT_SECRET")
 		if secret == "" {
 			return "secret_MAKMAK"
 		}
 		return secret
 	} else {
-		secret := viper.GetString("JWT_SECRET_REF")
+		secret := os.Getenv("JWT_SECRET_REF")
 		if secret == "" {
 			return "secret_MAKMAKMAK"
 		}

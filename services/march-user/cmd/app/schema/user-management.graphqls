@@ -1,0 +1,160 @@
+directive @goField(
+  forceResolver: Boolean
+  name: String
+) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+# new directive
+directive @auth(scopes: [String]) on FIELD_DEFINITION
+
+scalar DateTime
+
+type Address {
+  id: String
+  address: String
+  houseNo: String
+  moo: String
+  soi: String
+  road: String
+  district: String
+  subDistrict: String
+  Province: String
+  zipCode: String
+  createdBy: String
+  updatedBy: String
+  updatedAt: String
+  createdAt: String
+}
+
+type User {
+  id: String
+  username: String
+  email: String
+  citizenId: String
+  firstName: String
+  lastName: String
+  address: Address
+  tel: String
+  role: String!
+  shopsId: String!
+  isSuperAdmin: Boolean!
+  isRegistered: Boolean!
+  picture: String
+  createdBy: String
+  updatedBy: String
+  updatedAt: String
+  createdAt: String
+}
+
+type SubUserData {
+  id: String
+}
+
+type SubUserDataResponse {
+  data: User
+  status: Status
+}
+
+type Status {
+  code: Int!
+  message: String
+}
+
+input ParamsCreateSubUser {
+  role: String!
+  email: String!
+  firstname: String!
+  lastname: String!
+  description: String
+}
+
+type Shop {
+  id: String!
+  name: String!
+  description: String!
+  createdBy: String!
+  updatedBy: String!
+  createdAt: String!
+  updatedAt: String!
+  groups: [Group!]!
+  users: [User!]!
+}
+
+type Group {
+  id: String!
+  name: String!
+  shopsId: String!
+  groupFunctions: [GroupFunction!]!
+  groupTasks: [GroupTask!]!
+}
+
+type GroupFunction {
+  id: String!
+  name: String!
+  functionId: String!
+  groupId: String!
+  create: Boolean!
+  view: Boolean!
+  update: Boolean!
+}
+
+type GroupTask {
+  id: String!
+  name: String!
+  groupId: String!
+  taskId: String!
+  shopsId: String!
+  createdBy: String!
+  updatedBy: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Function {
+  id: String!
+  name: String!
+}
+
+type Task {
+  id: String!
+  name: String!
+  functionId: String!
+  description: String!
+}
+
+type GetPermissionResponse {
+  data: GetPermission
+  status: Status
+}
+
+type GetPermission {
+  shop: Shop!
+  functions: [Function!]!
+  tasks: [Task!]!
+}
+
+input ParamsUpdateRoleUser {
+  userId: String!
+  role: String!
+}
+
+type Mutation {
+  updateProfile: String @auth(scopes: ["AnyAdminScope"])
+  createProfile: String @auth(scopes: ["AnyAdminScope"])
+  createSubUser(input: ParamsCreateSubUser): SubUserDataResponse
+    @auth(scopes: ["AnyAdminScope"])
+  revokeSubUser(userId: String): SubUserDataResponse
+    @auth(scopes: ["AnyAdminScope"])
+  removeSubUser(userId: String): SubUserDataResponse
+    @auth(scopes: ["AnyAdminScope"])
+  updateRoleUser(input: ParamsUpdateRoleUser): SubUserDataResponse
+    @auth(scopes: ["AnyAdminScope"])
+}
+
+type Query {
+  getProfile: User @auth(scopes: ["AnyAdminScope"])
+  getTeam: [User] @auth(scopes: ["AnyAdminScope"])
+  getRole: String @auth(scopes: ["AnyAdminScope"])
+  getTask: String @auth(scopes: ["AnyAdminScope"])
+  getPermission: GetPermissionResponse @auth(scopes: ["AnyAdminScope"])
+  test: String
+}
