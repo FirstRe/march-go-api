@@ -603,7 +603,7 @@ func GetInventory(id *string, userInfo middlewares.UserClaims) (*types.Inventory
 
 	expiryDateStr := ""
 	if inventory.ExpiryDate != nil {
-		expiryDateStr = inventory.ExpiryDate.UTC().Format(time.DateTime)
+		expiryDateStr = inventory.ExpiryDate.UTC().Format(time.DateOnly)
 	}
 
 	inventoryData := &types.Inventory{

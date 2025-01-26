@@ -6,6 +6,8 @@ package resolvers
 
 import (
 	"context"
+	"core/app/helper"
+	"core/app/middlewares"
 	"fmt"
 	graph "march-user/cmd/app/graph/generated"
 	"march-user/cmd/app/graph/types"
@@ -43,6 +45,9 @@ func (r *mutationResolver) UpdateRoleUser(ctx context.Context, input *types.Para
 
 // GetProfile is the resolver for the getProfile field.
 func (r *queryResolver) GetProfile(ctx context.Context) (*types.User, error) {
+	logctx := helper.LogContext(ClassName, "GetProfile")
+	userInfo := middlewares.UserInfo(ctx)
+	logctx.Logger(userInfo, "userInfo")
 	panic(fmt.Errorf("not implemented: GetProfile - getProfile"))
 }
 
@@ -81,3 +86,5 @@ func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+const ClassName string = "UserResolver"
