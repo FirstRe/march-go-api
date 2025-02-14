@@ -4,18 +4,23 @@ FROM golang:1.22.1 AS builder
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
-# Copy the go.mod and go.sum files
-COPY go.work ./
+# Copy the go.work file
+COPY go.work go.work
+COPY go.work.sum go.work.sum  
+
+# Copy all module definitions
 COPY packages/core/go.mod packages/core/go.sum ./packages/core/
 COPY services/march-auth/go.mod services/march-auth/go.sum ./services/march-auth/
+COPY services/march-inventory/go.mod services/march-inventory/go.sum ./services/march-inventory/
+COPY services/march-user/go.mod services/march-user/go.sum ./services/march-user/
 
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
+# Download dependencies
 RUN go mod download
 
-# Copy the source code into the container
+# Copy the entire source code
 COPY . .
 
-# Build the Go binaries
+# Build the Go binary
 RUN go build -o services/march-auth/cmd/app ./services/march-auth/cmd/app
 
 # Start a new stage from scratch
@@ -24,12 +29,13 @@ FROM debian:bullseye-slim
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
-# Copy the Pre-built binary files from the previous stage
+# Copy the pre-built binary from the builder stage
 COPY --from=builder /app/services/march-auth ./services/march-auth
 
 # Ensure the binary has execution permissions
 RUN chmod +x services/march-auth/cmd/app/app
 
+# Expose the application port
 EXPOSE 8080
 
 # Command to run the executable
