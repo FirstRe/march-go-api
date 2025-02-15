@@ -6,6 +6,7 @@ directive @goField(
 # new directive
 directive @auth(scopes: [String]) on FIELD_DEFINITION
 
+scalar Upload
 scalar DateTime
 
 enum FavoriteStatus {
@@ -97,6 +98,27 @@ input UpsertInventoryInput {
   updatedBy: String
 }
 
+type UploadedInventory {
+  id: String!
+  name: String!
+  type: String!
+  brand: String!
+  branch: String!
+  favorite: String!
+  amount: String!
+  sku: String!
+  serialNumber: String!
+  reorderLevel: String!
+  weight: String!
+  width: String!
+  height: String!
+  length: String!
+  price: String!
+  priceMember: String!
+  expiryDate: String!
+  description: String!
+}
+
 type MutationInventoryResponse {
   data: ResponseId
   status: Status
@@ -129,6 +151,7 @@ type UploadInventoryResponse {
 
 type UploadInventory {
   id: String
+  data: [DataCSVUploaded]
   success: Boolean
   reason: String
 }
@@ -188,6 +211,17 @@ type InventoryNameResponse {
   status: Status
 }
 
+type DataCSVUploaded {
+  data: UploadedInventory
+  isValid: Boolean!
+  message: [InvalidField]!
+}
+
+type InvalidField {
+  name: String!
+  message: String!
+}
+
 extend type Query {
   getInventoryNames: InventoryNameResponse @auth(scopes: ["AnyAdminScope"])
   getInventory(id: String): InventoryDataResponse
@@ -199,7 +233,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  uploadInventory(input: UploadInventoryInput!): UploadInventoryResponse
+  uploadInventory(file: Upload!): UploadInventoryResponse
     @auth(scopes: ["INCSV"])
   upsertInventory(input: UpsertInventoryInput!): MutationInventoryResponse
     @auth(scopes: ["INMaker"])

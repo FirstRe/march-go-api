@@ -8,6 +8,12 @@ import (
 	"strconv"
 )
 
+type DataCSVUploaded struct {
+	Data    *UploadedInventory `json:"data,omitempty"`
+	IsValid bool               `json:"isValid"`
+	Message []*InvalidField    `json:"message"`
+}
+
 type DeleteInventoryBranchResponse struct {
 	Data   *ResponseID `json:"data,omitempty"`
 	Status *Status     `json:"status,omitempty"`
@@ -47,6 +53,11 @@ type DeletedInventoryType struct {
 	UpdatedBy *string `json:"updatedBy,omitempty"`
 	UpdatedAt string  `json:"updatedAt"`
 	CreatedAt string  `json:"createdAt"`
+}
+
+type InvalidField struct {
+	Name    string `json:"name"`
+	Message string `json:"message"`
 }
 
 type InventoriesResponse struct {
@@ -245,9 +256,10 @@ type Status struct {
 }
 
 type UploadInventory struct {
-	ID      *string `json:"id,omitempty"`
-	Success *bool   `json:"success,omitempty"`
-	Reason  *string `json:"reason,omitempty"`
+	ID      *string            `json:"id,omitempty"`
+	Data    []*DataCSVUploaded `json:"data,omitempty"`
+	Success *bool              `json:"success,omitempty"`
+	Reason  *string            `json:"reason,omitempty"`
 }
 
 type UploadInventoryInput struct {
@@ -258,6 +270,27 @@ type UploadInventoryInput struct {
 type UploadInventoryResponse struct {
 	Data   *UploadInventory `json:"data,omitempty"`
 	Status *Status          `json:"status,omitempty"`
+}
+
+type UploadedInventory struct {
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Type         string `json:"type"`
+	Brand        string `json:"brand"`
+	Branch       string `json:"branch"`
+	Favorite     string `json:"favorite"`
+	Amount       string `json:"amount"`
+	Sku          string `json:"sku"`
+	SerialNumber string `json:"serialNumber"`
+	ReorderLevel string `json:"reorderLevel"`
+	Weight       string `json:"weight"`
+	Width        string `json:"width"`
+	Height       string `json:"height"`
+	Length       string `json:"length"`
+	Price        string `json:"price"`
+	PriceMember  string `json:"priceMember"`
+	ExpiryDate   string `json:"expiryDate"`
+	Description  string `json:"description"`
 }
 
 type UpsertInventoryBranchInput struct {

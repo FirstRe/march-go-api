@@ -11,6 +11,7 @@ import (
 	"march-inventory/cmd/app/graph/model"
 	translation "march-inventory/cmd/app/i18n"
 	"march-inventory/cmd/app/resolvers"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -39,6 +40,7 @@ func initConfig() {
 	viper.AddConfigPath("/etc/appname/")
 	viper.AddConfigPath("$HOME/.appname")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("/app/services/march-auth/")
 
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -101,13 +103,22 @@ func setupGinRouter() *gin.Engine {
 	r.Use(middlewares.AuthMiddleware())
 	r.POST("/graphql", graphqlHandler())
 	r.GET("/graphql/playground", playgroundHandler())
-
+	r.POST("/upload", func(c *gin.Context) {
+		// Uploading file via multipart form
+		fmt.Println("Uploading file via multipart form")
+		file, _ := c.FormFile("file")
+		if err := c.SaveUploadedFile(file, "./"+file.Filename); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "File upload failed"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("File %s uploaded successfully!", file.Filename)})
+	})
 	return r
 }
 
 func startGraphQLServer(router *gin.Engine, port string) {
 	log.Printf("GraphQL server is running at http://localhost:%s/graphql/playground", port)
-	if err := router.Run("localhost:" + port); err != nil {
+	if err := router.Run("0.0.0.0:" + port); err != nil {
 		log.Fatalf("Failed to start GraphQL server: %v", err)
 	}
 }

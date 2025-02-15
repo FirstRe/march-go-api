@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  db1:
+    image: mariadb:10
+    command: --default-authentication-plugin=mysql_native_password
+    hostname: mariadb
+    container_name: march-db
+    volumes:
+      - ./mariaDb/mariadb:/var/lib/mysql
+      - ./mariaDb/schema:/docker-entrypoint-initdb.d
+    ports:
+      - 3306:3306
+    environment:
+      - TZ=Asia/Bangkok
+      - MYSQL_ROOT_PASSWORD=123456
+      - "MYSQL_ROOT_HOST=%"
+    networks:
+      - backend
+
+  march-auth:
+    image: march-auth:0.0.3
+    build:
+      context: .
+      dockerfile: ./docker/march-auth.dockerfile
+    container_name: march-auth
+    restart: always
+    environment:
+      DATABASE_URL: root:123456@tcp(db1:3306)/march-auth-test?charset=utf8mb4&parseTime=True&loc=Local
+    depends_on:
+      - db1
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+  march-inventory:
+    image: march-inventory:0.0.3
+    build:
+      context: .
+      dockerfile: ./docker/march-inventory.dockerfile
+    container_name: march-inventory
+    network_mode: "bridge"
+    restart: always
+    environment:
+      DATABASE_URL: root:123456@tcp(db1:3306)/march_inventory_test?charset=utf8mb4&parseTime=True&loc=Local
+      UAM_URL: http://march-auth:8080/auth/diviceId
+    depends_on:
+      - db1
+    ports:
+      - "8081:8081"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge

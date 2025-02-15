@@ -45,6 +45,7 @@ func initConfig() {
 	viper.AddConfigPath("/etc/appname/")
 	viper.AddConfigPath("$HOME/.appname")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("/app/services/march-auth/")
 
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -116,7 +117,7 @@ func setupGinRouter() *gin.Engine {
 
 func startGraphQLServer(router *gin.Engine, port string) {
 	log.Printf("GraphQL server is running at http://localhost:%s/graphql/playground", port)
-	if err := router.Run("localhost:" + port); err != nil {
+	if err := router.Run("0.0.0.0:" + port); err != nil {
 		log.Fatalf("Failed to start GraphQL server: %v", err)
 	}
 }

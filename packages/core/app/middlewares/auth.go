@@ -5,6 +5,7 @@ import (
 	"context"
 	"core/app/common/jwt"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	translation "march-inventory/cmd/app/i18n"
@@ -59,7 +60,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		if err != nil {
 			gqlErr = append(gqlErr, *gqlerror.Errorf("Unauthorized"))
 		}
-
+		fmt.Println("userInfo", userInfo)
 		var req GraphQLRequest
 
 		if c.Request.Method == http.MethodPost && c.GetHeader("Content-Type") == "application/json" {

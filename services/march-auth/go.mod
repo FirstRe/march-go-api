@@ -2,6 +2,8 @@ module march-auth
 
 go 1.22
 
+replace github.com/FirstRe/march-go-api/packages/core => ../../packages/core
+
 toolchain go1.22.1
 
 require (

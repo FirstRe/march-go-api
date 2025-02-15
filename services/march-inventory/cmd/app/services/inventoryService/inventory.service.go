@@ -1,10 +1,14 @@
 package inventoryService
 
 import (
+	utils "core"
 	"core/app/helper"
 	. "core/app/helper"
 	"core/app/middlewares"
+	"encoding/csv"
 	"errors"
+	"fmt"
+	"io"
 	"log"
 	gormDb "march-inventory/cmd/app/common/gorm"
 	"march-inventory/cmd/app/common/statusCode"
@@ -13,13 +17,22 @@ import (
 	"march-inventory/cmd/app/graph/types"
 	translation "march-inventory/cmd/app/i18n"
 	"math"
+	"os"
+	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
+
+type InValidField struct {
+	name    string
+	message string
+}
 
 func UpsertInventory(input types.UpsertInventoryInput, userInfo middlewares.UserClaims) (*types.MutationInventoryResponse, error) {
 	logctx := helper.LogContext(ClassName, "UpsertInventory")
@@ -841,4 +854,339 @@ func subRecovery[T *model.InventoryBranch | *model.InventoryBrand | *model.Inven
 			return &response, nil
 		}
 	}
+}
+
+func UploadCsv(file graphql.Upload, userInfo middlewares.UserClaims) (*types.UploadInventoryResponse, error) {
+	logctx := helper.LogContext(ClassName, "UploadCsv")
+
+	fileReader := file.File
+	uploadDir := "./uploads"
+	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+		os.Mkdir(uploadDir, os.ModePerm)
+	}
+	filePath := fmt.Sprintf("%s/%s", uploadDir, file.Filename)
+	outFile, err := os.Create(filePath)
+	if err != nil {
+		logctx.Logger(err, "Failed to create file")
+		return nil, fmt.Errorf("could not save file: %v", err)
+	}
+	defer outFile.Close()
+
+	_, err = io.Copy(outFile, fileReader)
+	if err != nil {
+		logctx.Logger(err, "Failed to copy file content")
+		return nil, fmt.Errorf("could not write file content: %v", err)
+	}
+	logctx.Logger(filePath, "File saved at")
+
+	csvFile, err := os.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("could not open saved file: %v", err)
+	}
+	defer csvFile.Close()
+
+	csvReader := csv.NewReader(csvFile)
+	csvReader.FieldsPerRecord = -1 
+	csvReader.LazyQuotes = true   
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse file as CSV")
+	}
+	if len(records) < 1 {
+		return nil, fmt.Errorf("CSV file is empty or missing headers")
+	}
+
+	headers := records[0]
+	for i := range headers {
+		headers[i] = strings.Trim(headers[i], "*")
+		headers[i] = strings.ReplaceAll(headers[i], `"`, "")
+		headers[i] = strings.ReplaceAll(headers[i], `\`, "")
+	}
+
+	results := []map[string]string{}
+
+	for _, row := range records[1:] { 
+		if len(row) != len(headers) {
+			return nil, fmt.Errorf("row length mismatch in CSV")
+		}
+		recordMap := make(map[string]string)
+		for i, value := range row {
+			recordMap[headers[i]] = value
+		}
+		results = append(results, recordMap)
+	}
+
+	logctx.Logger(results, "results")
+	inventory := []model.Inventory{}
+	inventoryType := []model.InventoryType{}
+	inventoryBranch := []model.InventoryBranch{}
+	inventoryBrand := []model.InventoryBrand{}
+
+	gormDb.Repos.Model(&[]model.InventoryType{}).Where("shops_Id = ?", userInfo.UserInfo.ShopsID).Find(&inventoryType)
+	gormDb.Repos.Model(&[]model.InventoryBranch{}).Where("shops_Id = ?", userInfo.UserInfo.ShopsID).Find(&inventoryBranch)
+	gormDb.Repos.Model(&[]model.InventoryBrand{}).Where("shops_Id = ?", userInfo.UserInfo.ShopsID).Find(&inventoryBrand)
+	gormDb.Repos.Model(&[]model.Inventory{}).Where("shops_Id = ?", userInfo.UserInfo.ShopsID).Find(&inventory)
+
+	requiredFields := []string{"name", "type", "brand", "branch", "amount", "price"}
+	integerFields := []string{
+		"reorderLevel",
+		"priceMember",
+		"favorite",
+		"weight",
+		"width",
+		"height",
+		"length",
+	}
+	stringFields := []string{"description", "sku", "expiryDate"}
+
+	validatedData := []*types.DataCSVUploaded{}
+	ids := []string{}
+
+	for _, record := range results {
+		isValid := true
+		inValidFields := []InValidField{}
+		id := record["id"]
+		if id == "" {
+			inValidFields = append(inValidFields, InValidField{
+				name:    "id",
+				message: "not found Id!",
+			})
+		} else if !slices.Contains(ids, id) {
+			ids = append(ids, id)
+		} else {
+			isValid = false
+			inValidFields = append(inValidFields, InValidField{
+				name:    "id",
+				message: "duplicate ID",
+			})
+		}
+		for _, requiredField := range requiredFields {
+			value, ok := record[requiredField]
+			if requiredField == "type" {
+				if !ok || value == "" {
+					isValid = false
+					inValidFields = append(inValidFields, InValidField{
+						name:    requiredField,
+						message: "type is requried",
+					})
+				} else if logivs := findInventoryProps(inventoryType, fmt.Sprintf("%v", value)); !logivs {
+					logctx.Logger(logivs, "logivs")
+					isValid = false
+					inValidFields = append(inValidFields, InValidField{
+						name:    requiredField,
+						message: "type is not found",
+					})
+				}
+			} else if requiredField == "brand" {
+				if !ok || value == "" {
+					isValid = false
+					inValidFields = append(inValidFields, InValidField{
+						name:    requiredField,
+						message: "brand is requried",
+					})
+				} else if !findInventoryProps(inventoryBrand, fmt.Sprintf("%v", value)) {
+					isValid = false
+					inValidFields = append(inValidFields, InValidField{
+						name:    requiredField,
+						message: "brand is not found",
+					})
+				}
+			} else if requiredField == "branch" {
+				if !ok || value == "" {
+					isValid = false
+					inValidFields = append(inValidFields, InValidField{
+						name:    requiredField,
+						message: "branch is requried",
+					})
+				} else if !findInventoryProps(inventoryBranch, fmt.Sprintf("%v", value)) {
+					isValid = false
+					inValidFields = append(inValidFields, InValidField{
+						name:    requiredField,
+						message: "branch is not found",
+					})
+				}
+			} else if requiredField == "price" || requiredField == "amount" {
+				findInt := utils.IsInteger(value)
+
+				if !ok || value == "" {
+					isValid = false
+					inValidFields = append(inValidFields, InValidField{
+						name:    requiredField,
+						message: "price is requried",
+					})
+				} else if !findInt {
+					isValid = false
+					inValidFields = append(inValidFields, InValidField{
+						name:    requiredField,
+						message: "price is not number",
+					})
+				} else if requiredField == "amount" && len(value) > 10 {
+					isValid = false
+					inValidFields = append(inValidFields, InValidField{
+						name:    requiredField,
+						message: "price is max length 10",
+					})
+				}
+			} else if requiredField == "name" {
+				if !ok || value == "" {
+					isValid = false
+					inValidFields = append(inValidFields, InValidField{
+						name:    requiredField,
+						message: "name is required",
+					})
+				} else if len(value) > 20 {
+					isValid = false
+					inValidFields = append(inValidFields, InValidField{
+						name:    requiredField,
+						message: "name is max length 20",
+					})
+				} else if findInventoryProps(inventory, value) {
+					isValid = false
+					inValidFields = append(inValidFields, InValidField{
+						name:    requiredField,
+						message: "name duplicated",
+					})
+				}
+			}
+
+		}
+		for _, integerField := range integerFields {
+			value, ok := record[integerField]
+			if ok && value != "" {
+				findInt := utils.IsInteger(value)
+				if integerField == "favorite" {
+					if strings.ToLower(value) != "yes" && strings.ToLower(value) != "no" {
+						isValid = false
+						inValidFields = append(inValidFields, InValidField{
+							name:    integerField,
+							message: "must be  yes or no",
+						})
+					}
+				} else {
+					if !findInt {
+						isValid = false
+						inValidFields = append(inValidFields, InValidField{
+							name:    integerField,
+							message: "not number",
+						})
+					} else if len(value) > 10 {
+						isValid = false
+						inValidFields = append(inValidFields, InValidField{
+							name:    integerField,
+							message: "max length 10",
+						})
+					}
+				}
+			}
+		}
+		for _, stringField := range stringFields {
+			value, ok := record[stringField]
+
+			if ok && value != "" {
+				if stringField == "expiryDate" {
+					if !utils.ValidateExpiryDate(value) {
+						isValid = false
+						inValidFields = append(inValidFields, InValidField{
+							name:    stringField,
+							message: "expiry date is wrong!",
+						})
+					}
+				} else if stringField == "sku" {
+					if len(value) > 20 {
+						isValid = false
+						inValidFields = append(inValidFields, InValidField{
+							name:    stringField,
+							message: "max length 20",
+						})
+					}
+				} else if stringField == "description" {
+					if len(value) > 300 {
+						isValid = false
+						inValidFields = append(inValidFields, InValidField{
+							name:    stringField,
+							message: "max length 300",
+						})
+					}
+				}
+			}
+
+		}
+
+		inValidFieldsCon := []*types.InvalidField{}
+
+		for _, inValidField := range inValidFields {
+			inValidFieldsCon = append(inValidFieldsCon, &types.InvalidField{
+				Name:    inValidField.name,
+				Message: inValidField.message,
+			})
+		}
+
+		validatedData = append(validatedData, &types.DataCSVUploaded{
+			Data: &types.UploadedInventory{
+				ID:           record["id"],
+				Name:         record["name"],
+				Type:         record["type"],
+				Brand:        record["brand"],
+				Branch:       record["branch"],
+				Favorite:     record["favorite"],
+				Amount:       record["amount"],
+				Sku:          record["sku"],
+				SerialNumber: record["serialNumber"],
+				ReorderLevel: record["reorderLevel"],
+				Weight:       record["weight"],
+				Width:        record["width"],
+				Height:       record["height"],
+				Length:       record["length"],
+				Price:        record["price"],
+				PriceMember:  record["priceMember"],
+				ExpiryDate:   record["expiryDate"],
+				Description:  record["description"],
+			},
+			IsValid: isValid,
+			Message: inValidFieldsCon,
+		})
+	}
+
+	var validData []any
+	var invalidData []any
+
+	for _, d := range validatedData {
+		if d.IsValid {
+			validData = append(validData, d)
+		} else {
+			invalidData = append(invalidData, d)
+		}
+	}
+
+	log.Printf("invalidDataNaja: %+v", invalidData)
+	log.Printf("validDataNaja: %+v", validData)
+
+	if err := os.Remove(filePath); err != nil {
+		log.Printf("Failed to delete file: %v", err)
+		return nil, fmt.Errorf("could not remove file: %v", err)
+	}
+	log.Printf("File removed: %s", filePath)
+
+	return &types.UploadInventoryResponse{
+		Status: statusCode.Success(translation.LocalizeMessage("Upload.success")),
+		Data: &types.UploadInventory{
+			Success: utils.BoolAddr(true),
+			Data:    validatedData,
+		},
+	}, nil
+}
+
+func findInventoryProps[T any](data []T, value string) bool {
+	isHasValue := false
+	for _, e := range data {
+		name := strings.Split(reflect.ValueOf(e).FieldByName("Name").String(), "|")
+		if len(name) < 2 {
+
+		} else {
+			if name[0] == value {
+				isHasValue = true
+			}
+		}
+	}
+	return isHasValue
 }

@@ -93,7 +93,7 @@ func validateDeviceId(
 	isBackOffice := isBackOfficeUser(userTask)
 	l.Logger(isBackOffice, "isBackOffice")
 	if deviceIdToken != *deviceId {
-		return false, "Unauthorized Device2"
+		return false, "Unauthorized Device"
 	} else {
 		if isBackOffice {
 			if verifyUser := verifyUserGroups(scopes, userTask); verifyUser {

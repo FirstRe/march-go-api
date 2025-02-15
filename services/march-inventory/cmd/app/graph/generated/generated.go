@@ -48,6 +48,12 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	DataCSVUploaded struct {
+		Data    func(childComplexity int) int
+		IsValid func(childComplexity int) int
+		Message func(childComplexity int) int
+	}
+
 	DeleteInventoryBranchResponse struct {
 		Data   func(childComplexity int) int
 		Status func(childComplexity int) int
@@ -87,6 +93,11 @@ type ComplexityRoot struct {
 		Name      func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 		UpdatedBy func(childComplexity int) int
+	}
+
+	InvalidField struct {
+		Message func(childComplexity int) int
+		Name    func(childComplexity int) int
 	}
 
 	InventoriesResponse struct {
@@ -191,7 +202,7 @@ type ComplexityRoot struct {
 		DeleteInventoryType   func(childComplexity int, id string) int
 		FavoriteInventory     func(childComplexity int, id string) int
 		RecoveryHardDeleted   func(childComplexity int, input types.RecoveryHardDeletedInput) int
-		UploadInventory       func(childComplexity int, input types.UploadInventoryInput) int
+		UploadInventory       func(childComplexity int, file graphql.Upload) int
 		UpsertInventory       func(childComplexity int, input types.UpsertInventoryInput) int
 		UpsertInventoryBranch func(childComplexity int, input types.UpsertInventoryBranchInput) int
 		UpsertInventoryBrand  func(childComplexity int, input types.UpsertInventoryBrandInput) int
@@ -264,6 +275,7 @@ type ComplexityRoot struct {
 	}
 
 	UploadInventory struct {
+		Data    func(childComplexity int) int
 		ID      func(childComplexity int) int
 		Reason  func(childComplexity int) int
 		Success func(childComplexity int) int
@@ -273,6 +285,27 @@ type ComplexityRoot struct {
 		Data   func(childComplexity int) int
 		Status func(childComplexity int) int
 	}
+
+	UploadedInventory struct {
+		Amount       func(childComplexity int) int
+		Branch       func(childComplexity int) int
+		Brand        func(childComplexity int) int
+		Description  func(childComplexity int) int
+		ExpiryDate   func(childComplexity int) int
+		Favorite     func(childComplexity int) int
+		Height       func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Length       func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Price        func(childComplexity int) int
+		PriceMember  func(childComplexity int) int
+		ReorderLevel func(childComplexity int) int
+		SerialNumber func(childComplexity int) int
+		Sku          func(childComplexity int) int
+		Type         func(childComplexity int) int
+		Weight       func(childComplexity int) int
+		Width        func(childComplexity int) int
+	}
 }
 
 type InventoryTypeResolver interface {
@@ -281,7 +314,7 @@ type InventoryTypeResolver interface {
 type MutationResolver interface {
 	UpsertInventoryBrand(ctx context.Context, input types.UpsertInventoryBrandInput) (*types.MutationInventoryBrandResponse, error)
 	DeleteInventoryBrand(ctx context.Context, id string) (*types.MutationInventoryBrandResponse, error)
-	UploadInventory(ctx context.Context, input types.UploadInventoryInput) (*types.UploadInventoryResponse, error)
+	UploadInventory(ctx context.Context, file graphql.Upload) (*types.UploadInventoryResponse, error)
 	UpsertInventory(ctx context.Context, input types.UpsertInventoryInput) (*types.MutationInventoryResponse, error)
 	DeleteInventory(ctx context.Context, id string) (*types.MutationInventoryResponse, error)
 	FavoriteInventory(ctx context.Context, id string) (*types.MutationInventoryResponse, error)
@@ -321,6 +354,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "DataCSVUploaded.data":
+		if e.complexity.DataCSVUploaded.Data == nil {
+			break
+		}
+
+		return e.complexity.DataCSVUploaded.Data(childComplexity), true
+
+	case "DataCSVUploaded.isValid":
+		if e.complexity.DataCSVUploaded.IsValid == nil {
+			break
+		}
+
+		return e.complexity.DataCSVUploaded.IsValid(childComplexity), true
+
+	case "DataCSVUploaded.message":
+		if e.complexity.DataCSVUploaded.Message == nil {
+			break
+		}
+
+		return e.complexity.DataCSVUploaded.Message(childComplexity), true
 
 	case "DeleteInventoryBranchResponse.data":
 		if e.complexity.DeleteInventoryBranchResponse.Data == nil {
@@ -461,6 +515,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DeletedInventoryType.UpdatedBy(childComplexity), true
+
+	case "InvalidField.message":
+		if e.complexity.InvalidField.Message == nil {
+			break
+		}
+
+		return e.complexity.InvalidField.Message(childComplexity), true
+
+	case "InvalidField.name":
+		if e.complexity.InvalidField.Name == nil {
+			break
+		}
+
+		return e.complexity.InvalidField.Name(childComplexity), true
 
 	case "InventoriesResponse.data":
 		if e.complexity.InventoriesResponse.Data == nil {
@@ -957,7 +1025,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UploadInventory(childComplexity, args["input"].(types.UploadInventoryInput)), true
+		return e.complexity.Mutation.UploadInventory(childComplexity, args["file"].(graphql.Upload)), true
 
 	case "Mutation.upsertInventory":
 		if e.complexity.Mutation.UpsertInventory == nil {
@@ -1266,6 +1334,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Status.Message(childComplexity), true
 
+	case "UploadInventory.data":
+		if e.complexity.UploadInventory.Data == nil {
+			break
+		}
+
+		return e.complexity.UploadInventory.Data(childComplexity), true
+
 	case "UploadInventory.id":
 		if e.complexity.UploadInventory.ID == nil {
 			break
@@ -1300,6 +1375,132 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UploadInventoryResponse.Status(childComplexity), true
+
+	case "UploadedInventory.amount":
+		if e.complexity.UploadedInventory.Amount == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Amount(childComplexity), true
+
+	case "UploadedInventory.branch":
+		if e.complexity.UploadedInventory.Branch == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Branch(childComplexity), true
+
+	case "UploadedInventory.brand":
+		if e.complexity.UploadedInventory.Brand == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Brand(childComplexity), true
+
+	case "UploadedInventory.description":
+		if e.complexity.UploadedInventory.Description == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Description(childComplexity), true
+
+	case "UploadedInventory.expiryDate":
+		if e.complexity.UploadedInventory.ExpiryDate == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.ExpiryDate(childComplexity), true
+
+	case "UploadedInventory.favorite":
+		if e.complexity.UploadedInventory.Favorite == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Favorite(childComplexity), true
+
+	case "UploadedInventory.height":
+		if e.complexity.UploadedInventory.Height == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Height(childComplexity), true
+
+	case "UploadedInventory.id":
+		if e.complexity.UploadedInventory.ID == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.ID(childComplexity), true
+
+	case "UploadedInventory.length":
+		if e.complexity.UploadedInventory.Length == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Length(childComplexity), true
+
+	case "UploadedInventory.name":
+		if e.complexity.UploadedInventory.Name == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Name(childComplexity), true
+
+	case "UploadedInventory.price":
+		if e.complexity.UploadedInventory.Price == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Price(childComplexity), true
+
+	case "UploadedInventory.priceMember":
+		if e.complexity.UploadedInventory.PriceMember == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.PriceMember(childComplexity), true
+
+	case "UploadedInventory.reorderLevel":
+		if e.complexity.UploadedInventory.ReorderLevel == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.ReorderLevel(childComplexity), true
+
+	case "UploadedInventory.serialNumber":
+		if e.complexity.UploadedInventory.SerialNumber == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.SerialNumber(childComplexity), true
+
+	case "UploadedInventory.sku":
+		if e.complexity.UploadedInventory.Sku == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Sku(childComplexity), true
+
+	case "UploadedInventory.type":
+		if e.complexity.UploadedInventory.Type == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Type(childComplexity), true
+
+	case "UploadedInventory.weight":
+		if e.complexity.UploadedInventory.Weight == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Weight(childComplexity), true
+
+	case "UploadedInventory.width":
+		if e.complexity.UploadedInventory.Width == nil {
+			break
+		}
+
+		return e.complexity.UploadedInventory.Width(childComplexity), true
 
 	}
 	return 0, false
@@ -1425,6 +1626,7 @@ var sources = []*ast.Source{
 # new directive
 directive @auth(scopes: [String]) on FIELD_DEFINITION
 
+scalar Upload
 scalar DateTime
 
 enum FavoriteStatus {
@@ -1516,6 +1718,27 @@ input UpsertInventoryInput {
   updatedBy: String
 }
 
+type UploadedInventory {
+  id: String!
+  name: String!
+  type: String!
+  brand: String!
+  branch: String!
+  favorite: String!
+  amount: String!
+  sku: String!
+  serialNumber: String!
+  reorderLevel: String!
+  weight: String!
+  width: String!
+  height: String!
+  length: String!
+  price: String!
+  priceMember: String!
+  expiryDate: String!
+  description: String!
+}
+
 type MutationInventoryResponse {
   data: ResponseId
   status: Status
@@ -1548,6 +1771,7 @@ type UploadInventoryResponse {
 
 type UploadInventory {
   id: String
+  data: [DataCSVUploaded]
   success: Boolean
   reason: String
 }
@@ -1607,6 +1831,17 @@ type InventoryNameResponse {
   status: Status
 }
 
+type DataCSVUploaded {
+  data: UploadedInventory
+  isValid: Boolean!
+  message: [InvalidField]!
+}
+
+type InvalidField {
+  name: String!
+  message: String!
+}
+
 extend type Query {
   getInventoryNames: InventoryNameResponse @auth(scopes: ["AnyAdminScope"])
   getInventory(id: String): InventoryDataResponse
@@ -1618,7 +1853,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  uploadInventory(input: UploadInventoryInput!): UploadInventoryResponse
+  uploadInventory(file: Upload!): UploadInventoryResponse
     @auth(scopes: ["INCSV"])
   upsertInventory(input: UpsertInventoryInput!): MutationInventoryResponse
     @auth(scopes: ["INMaker"])
@@ -1917,15 +2152,15 @@ func (ec *executionContext) field_Mutation_recoveryHardDeleted_args(ctx context.
 func (ec *executionContext) field_Mutation_uploadInventory_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 types.UploadInventoryInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUploadInventoryInput2marchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐUploadInventoryInput(ctx, tmp)
+	var arg0 graphql.Upload
+	if tmp, ok := rawArgs["file"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
+		arg0, err = ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["file"] = arg0
 	return args, nil
 }
 
@@ -2146,6 +2381,179 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _DataCSVUploaded_data(ctx context.Context, field graphql.CollectedField, obj *types.DataCSVUploaded) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataCSVUploaded_data(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Data, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*types.UploadedInventory)
+	fc.Result = res
+	return ec.marshalOUploadedInventory2ᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐUploadedInventory(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataCSVUploaded_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataCSVUploaded",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_UploadedInventory_id(ctx, field)
+			case "name":
+				return ec.fieldContext_UploadedInventory_name(ctx, field)
+			case "type":
+				return ec.fieldContext_UploadedInventory_type(ctx, field)
+			case "brand":
+				return ec.fieldContext_UploadedInventory_brand(ctx, field)
+			case "branch":
+				return ec.fieldContext_UploadedInventory_branch(ctx, field)
+			case "favorite":
+				return ec.fieldContext_UploadedInventory_favorite(ctx, field)
+			case "amount":
+				return ec.fieldContext_UploadedInventory_amount(ctx, field)
+			case "sku":
+				return ec.fieldContext_UploadedInventory_sku(ctx, field)
+			case "serialNumber":
+				return ec.fieldContext_UploadedInventory_serialNumber(ctx, field)
+			case "reorderLevel":
+				return ec.fieldContext_UploadedInventory_reorderLevel(ctx, field)
+			case "weight":
+				return ec.fieldContext_UploadedInventory_weight(ctx, field)
+			case "width":
+				return ec.fieldContext_UploadedInventory_width(ctx, field)
+			case "height":
+				return ec.fieldContext_UploadedInventory_height(ctx, field)
+			case "length":
+				return ec.fieldContext_UploadedInventory_length(ctx, field)
+			case "price":
+				return ec.fieldContext_UploadedInventory_price(ctx, field)
+			case "priceMember":
+				return ec.fieldContext_UploadedInventory_priceMember(ctx, field)
+			case "expiryDate":
+				return ec.fieldContext_UploadedInventory_expiryDate(ctx, field)
+			case "description":
+				return ec.fieldContext_UploadedInventory_description(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UploadedInventory", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataCSVUploaded_isValid(ctx context.Context, field graphql.CollectedField, obj *types.DataCSVUploaded) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataCSVUploaded_isValid(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsValid, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataCSVUploaded_isValid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataCSVUploaded",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataCSVUploaded_message(ctx context.Context, field graphql.CollectedField, obj *types.DataCSVUploaded) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataCSVUploaded_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*types.InvalidField)
+	fc.Result = res
+	return ec.marshalNInvalidField2ᚕᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐInvalidField(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataCSVUploaded_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataCSVUploaded",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_InvalidField_name(ctx, field)
+			case "message":
+				return ec.fieldContext_InvalidField_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type InvalidField", field.Name)
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _DeleteInventoryBranchResponse_data(ctx context.Context, field graphql.CollectedField, obj *types.DeleteInventoryBranchResponse) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeleteInventoryBranchResponse_data(ctx, field)
@@ -3075,6 +3483,94 @@ func (ec *executionContext) _DeletedInventoryType_createdAt(ctx context.Context,
 func (ec *executionContext) fieldContext_DeletedInventoryType_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeletedInventoryType",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvalidField_name(ctx context.Context, field graphql.CollectedField, obj *types.InvalidField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvalidField_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InvalidField_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvalidField",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvalidField_message(ctx context.Context, field graphql.CollectedField, obj *types.InvalidField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvalidField_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InvalidField_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvalidField",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5956,7 +6452,7 @@ func (ec *executionContext) _Mutation_uploadInventory(ctx context.Context, field
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UploadInventory(rctx, fc.Args["input"].(types.UploadInventoryInput))
+			return ec.resolvers.Mutation().UploadInventory(rctx, fc.Args["file"].(graphql.Upload))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			scopes, err := ec.unmarshalOString2ᚕᚖstring(ctx, []interface{}{"INCSV"})
@@ -8619,6 +9115,55 @@ func (ec *executionContext) fieldContext_UploadInventory_id(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _UploadInventory_data(ctx context.Context, field graphql.CollectedField, obj *types.UploadInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadInventory_data(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Data, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*types.DataCSVUploaded)
+	fc.Result = res
+	return ec.marshalODataCSVUploaded2ᚕᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐDataCSVUploaded(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadInventory_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_DataCSVUploaded_data(ctx, field)
+			case "isValid":
+				return ec.fieldContext_DataCSVUploaded_isValid(ctx, field)
+			case "message":
+				return ec.fieldContext_DataCSVUploaded_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DataCSVUploaded", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UploadInventory_success(ctx context.Context, field graphql.CollectedField, obj *types.UploadInventory) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UploadInventory_success(ctx, field)
 	if err != nil {
@@ -8739,6 +9284,8 @@ func (ec *executionContext) fieldContext_UploadInventoryResponse_data(ctx contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_UploadInventory_id(ctx, field)
+			case "data":
+				return ec.fieldContext_UploadInventory_data(ctx, field)
 			case "success":
 				return ec.fieldContext_UploadInventory_success(ctx, field)
 			case "reason":
@@ -8792,6 +9339,798 @@ func (ec *executionContext) fieldContext_UploadInventoryResponse_status(ctx cont
 				return ec.fieldContext_Status_message(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Status", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_id(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_name(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_type(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_brand(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_brand(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Brand, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_brand(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_branch(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_branch(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Branch, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_branch(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_favorite(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_favorite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Favorite, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_favorite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_amount(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_amount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Amount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_amount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_sku(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_sku(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Sku, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_sku(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_serialNumber(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_serialNumber(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SerialNumber, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_serialNumber(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_reorderLevel(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_reorderLevel(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReorderLevel, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_reorderLevel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_weight(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_weight(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Weight, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_weight(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_width(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_width(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Width, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_width(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_height(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_height(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Height, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_height(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_length(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_length(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Length, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_length(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_price(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_price(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Price, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_price(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_priceMember(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_priceMember(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PriceMember, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_priceMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_expiryDate(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_expiryDate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExpiryDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_expiryDate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadedInventory_description(ctx context.Context, field graphql.CollectedField, obj *types.UploadedInventory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadedInventory_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadedInventory_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadedInventory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11197,6 +12536,52 @@ func (ec *executionContext) unmarshalInputUpsertInventoryTypeInput(ctx context.C
 
 // region    **************************** object.gotpl ****************************
 
+var dataCSVUploadedImplementors = []string{"DataCSVUploaded"}
+
+func (ec *executionContext) _DataCSVUploaded(ctx context.Context, sel ast.SelectionSet, obj *types.DataCSVUploaded) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dataCSVUploadedImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DataCSVUploaded")
+		case "data":
+			out.Values[i] = ec._DataCSVUploaded_data(ctx, field, obj)
+		case "isValid":
+			out.Values[i] = ec._DataCSVUploaded_isValid(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._DataCSVUploaded_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var deleteInventoryBranchResponseImplementors = []string{"DeleteInventoryBranchResponse"}
 
 func (ec *executionContext) _DeleteInventoryBranchResponse(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteInventoryBranchResponse) graphql.Marshaler {
@@ -11455,6 +12840,50 @@ func (ec *executionContext) _DeletedInventoryType(ctx context.Context, sel ast.S
 			}
 		case "createdAt":
 			out.Values[i] = ec._DeletedInventoryType_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var invalidFieldImplementors = []string{"InvalidField"}
+
+func (ec *executionContext) _InvalidField(ctx context.Context, sel ast.SelectionSet, obj *types.InvalidField) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, invalidFieldImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InvalidField")
+		case "name":
+			out.Values[i] = ec._InvalidField_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._InvalidField_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -12792,6 +14221,8 @@ func (ec *executionContext) _UploadInventory(ctx context.Context, sel ast.Select
 			out.Values[i] = graphql.MarshalString("UploadInventory")
 		case "id":
 			out.Values[i] = ec._UploadInventory_id(ctx, field, obj)
+		case "data":
+			out.Values[i] = ec._UploadInventory_data(ctx, field, obj)
 		case "success":
 			out.Values[i] = ec._UploadInventory_success(ctx, field, obj)
 		case "reason":
@@ -12834,6 +14265,130 @@ func (ec *executionContext) _UploadInventoryResponse(ctx context.Context, sel as
 			out.Values[i] = ec._UploadInventoryResponse_data(ctx, field, obj)
 		case "status":
 			out.Values[i] = ec._UploadInventoryResponse_status(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var uploadedInventoryImplementors = []string{"UploadedInventory"}
+
+func (ec *executionContext) _UploadedInventory(ctx context.Context, sel ast.SelectionSet, obj *types.UploadedInventory) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, uploadedInventoryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UploadedInventory")
+		case "id":
+			out.Values[i] = ec._UploadedInventory_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._UploadedInventory_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._UploadedInventory_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "brand":
+			out.Values[i] = ec._UploadedInventory_brand(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "branch":
+			out.Values[i] = ec._UploadedInventory_branch(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "favorite":
+			out.Values[i] = ec._UploadedInventory_favorite(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "amount":
+			out.Values[i] = ec._UploadedInventory_amount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sku":
+			out.Values[i] = ec._UploadedInventory_sku(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "serialNumber":
+			out.Values[i] = ec._UploadedInventory_serialNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reorderLevel":
+			out.Values[i] = ec._UploadedInventory_reorderLevel(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "weight":
+			out.Values[i] = ec._UploadedInventory_weight(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "width":
+			out.Values[i] = ec._UploadedInventory_width(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "height":
+			out.Values[i] = ec._UploadedInventory_height(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "length":
+			out.Values[i] = ec._UploadedInventory_length(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "price":
+			out.Values[i] = ec._UploadedInventory_price(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "priceMember":
+			out.Values[i] = ec._UploadedInventory_priceMember(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "expiryDate":
+			out.Values[i] = ec._UploadedInventory_expiryDate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._UploadedInventory_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13233,6 +14788,44 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) marshalNInvalidField2ᚕᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐInvalidField(ctx context.Context, sel ast.SelectionSet, v []*types.InvalidField) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOInvalidField2ᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐInvalidField(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) marshalNPost2ᚕᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐPostᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Post) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -13307,9 +14900,19 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNUploadInventoryInput2marchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐUploadInventoryInput(ctx context.Context, v interface{}) (types.UploadInventoryInput, error) {
-	res, err := ec.unmarshalInputUploadInventoryInput(ctx, v)
+func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v graphql.Upload) graphql.Marshaler {
+	res := graphql.MarshalUpload(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNUpsertInventoryBranchInput2marchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐUpsertInventoryBranchInput(ctx context.Context, v interface{}) (types.UpsertInventoryBranchInput, error) {
@@ -13611,6 +15214,54 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) marshalODataCSVUploaded2ᚕᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐDataCSVUploaded(ctx context.Context, sel ast.SelectionSet, v []*types.DataCSVUploaded) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalODataCSVUploaded2ᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐDataCSVUploaded(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalODataCSVUploaded2ᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐDataCSVUploaded(ctx context.Context, sel ast.SelectionSet, v *types.DataCSVUploaded) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DataCSVUploaded(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalODeletedInventory2ᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐDeletedInventory(ctx context.Context, sel ast.SelectionSet, v *types.DeletedInventory) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -13735,6 +15386,13 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOInvalidField2ᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐInvalidField(ctx context.Context, sel ast.SelectionSet, v *types.InvalidField) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._InvalidField(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOInventoriesResponse2ᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐInventoriesResponse(ctx context.Context, sel ast.SelectionSet, v *types.InventoriesResponse) graphql.Marshaler {
@@ -14182,6 +15840,13 @@ func (ec *executionContext) marshalOUploadInventoryResponse2ᚖmarchᚑinventory
 		return graphql.Null
 	}
 	return ec._UploadInventoryResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUploadedInventory2ᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐUploadedInventory(ctx context.Context, sel ast.SelectionSet, v *types.UploadedInventory) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UploadedInventory(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOUpsertInventoryInput2ᚕᚖmarchᚑinventoryᚋcmdᚋappᚋgraphᚋtypesᚐUpsertInventoryInput(ctx context.Context, v interface{}) ([]*types.UpsertInventoryInput, error) {

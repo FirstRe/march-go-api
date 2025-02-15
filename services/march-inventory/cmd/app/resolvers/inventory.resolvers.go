@@ -8,14 +8,18 @@ import (
 	"context"
 	"core/app/helper"
 	"core/app/middlewares"
-	"fmt"
 	"march-inventory/cmd/app/graph/types"
 	"march-inventory/cmd/app/services/inventoryService"
+
+	"github.com/99designs/gqlgen/graphql"
 )
 
 // UploadInventory is the resolver for the uploadInventory field.
-func (r *mutationResolver) UploadInventory(ctx context.Context, input types.UploadInventoryInput) (*types.UploadInventoryResponse, error) {
-	panic(fmt.Errorf("not implemented: UploadInventory - uploadInventory"))
+func (r *mutationResolver) UploadInventory(ctx context.Context, file graphql.Upload) (*types.UploadInventoryResponse, error) {
+	logctx := helper.LogContext(ClassName, "UploadInventory")
+	userInfo := middlewares.UserInfo(ctx)
+	logctx.Logger(userInfo, "userInfo")
+	return inventoryService.UploadCsv(file, userInfo)
 }
 
 // UpsertInventory is the resolver for the upsertInventory field.

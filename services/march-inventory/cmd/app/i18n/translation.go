@@ -3,6 +3,7 @@ package translation
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
@@ -16,9 +17,19 @@ func InitI18n() {
 	bundle = i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 
+	var filePathEn string
+	var filePathTh string
+	if dir == "/app/services/march-inventory/cmd/app" {
+		filePathEn = filepath.Join(dir, "i18n", "en", "en.json")
+		filePathTh = filepath.Join(dir, "i18n", "en", "en.json")
+	} else {
+		filePathEn = filepath.Join(dir, "cmd", "app", "i18n", "en", "en.json")
+		filePathTh = filepath.Join(dir, "cmd", "app", "i18n", "en", "en.json")
+	}
+
 	// Load message files
-	bundle.MustLoadMessageFile(dir + "/cmd/app/i18n/en/en.json")
-	bundle.MustLoadMessageFile(dir + "/cmd/app/i18n/th/th.json")
+	bundle.MustLoadMessageFile(filePathEn)
+	bundle.MustLoadMessageFile(filePathTh)
 }
 
 func InitLocalizer(langCode string) {
