@@ -28,7 +28,7 @@ func (r *mutationResolver) UpsertInventory(ctx context.Context, input types.Upse
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
 
-	return inventoryService.UpsertInventory(input, userInfo)
+	return r.InventoryService.UpsertInventory(input, userInfo)
 }
 
 // DeleteInventory is the resolver for the deleteInventory field.
@@ -46,7 +46,7 @@ func (r *mutationResolver) FavoriteInventory(ctx context.Context, id string) (*t
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
 
-	return inventoryService.FavoriteInventory(id, userInfo)
+	return r.InventoryService.FavoriteInventory(id, userInfo)
 }
 
 // RecoveryHardDeleted is the resolver for the recoveryHardDeleted field.
@@ -79,7 +79,7 @@ func (r *queryResolver) GetInventories(ctx context.Context, params *types.Params
 	logctx := helper.LogContext(ClassName, "GetInventories")
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
-	return inventoryService.GetInventories(params, userInfo)
+	return r.InventoryService.GetInventories(params, userInfo)
 }
 
 // GetInventoryAllDeleted is the resolver for the getInventoryAllDeleted field.

@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"log"
 	gormDb "march-inventory/cmd/app/common/gorm"
+	"march-inventory/cmd/app/common/redis"
 	graph "march-inventory/cmd/app/graph/generated"
 	"march-inventory/cmd/app/graph/model"
 	translation "march-inventory/cmd/app/i18n"
+	"march-inventory/cmd/app/repositories"
 	"march-inventory/cmd/app/resolvers"
+	"march-inventory/cmd/app/services/newInventory"
 	"net/http"
 	"os"
 	"strconv"
@@ -27,6 +30,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
+	"gorm.io/gorm"
 )
 
 const defaultPort = "8081"
@@ -49,8 +53,10 @@ func initConfig() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 }
 
-func graphqlHandler() gin.HandlerFunc {
-	c := graph.Config{Resolvers: &resolvers.Resolver{}}
+func graphqlHandler(inventoryService newInventory.InventoryService) gin.HandlerFunc {
+	c := graph.Config{Resolvers: &resolvers.Resolver{
+		InventoryService: inventoryService,
+	}}
 	c.Directives.Auth = auth.Auth
 	introspectionString := os.Getenv("GRAPHQL_INTROSPECTION")
 	introspection, _ := strconv.ParseBool(introspectionString)
@@ -75,7 +81,7 @@ func playgroundHandler() gin.HandlerFunc {
 	}
 }
 
-func setupDatabase() {
+func setupDatabase() *gorm.DB {
 	db, err := gormDb.Initialize()
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
@@ -87,10 +93,10 @@ func setupDatabase() {
 		&model.InventoryFile{},
 		&model.InventoryType{},
 	)
-
+	return db
 }
 
-func setupGinRouter() *gin.Engine {
+func setupGinRouter(inventoryService newInventory.InventoryService) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -101,7 +107,7 @@ func setupGinRouter() *gin.Engine {
 	}))
 
 	r.Use(middlewares.AuthMiddleware())
-	r.POST("/graphql", graphqlHandler())
+	r.POST("/graphql", graphqlHandler(inventoryService))
 	r.GET("/graphql/playground", playgroundHandler())
 	r.POST("/upload", func(c *gin.Context) {
 		// Uploading file via multipart form
@@ -150,10 +156,14 @@ func main() {
 	// if grpcPort == "" {
 	// 	grpcPort = defaultGrpcPort
 	// }
+	
+	redis.InitRedis()
 
 	translation.InitI18n()
-	setupDatabase()
+	db := setupDatabase()
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	inventoryRepo := repositories.NewProductRepository(db)
+	inventoryService := newInventory.NewInventoryServiceRedis(redis.RedisClient, inventoryRepo)
 
 	//grpc cilent
 	connections := grpcCilent.Init()
@@ -173,7 +183,7 @@ func main() {
 
 	//grpc cilent
 
-	router := setupGinRouter()
+	router := setupGinRouter(inventoryService)
 	startGraphQLServer(router, port)
 	// startGrpcServer(grpcPort)
 
