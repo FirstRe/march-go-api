@@ -8,7 +8,7 @@ import (
 )
 
 type User struct {
-	ID           string    `gorm:"type:varchar(40);primaryKey;default:uuid()" json:"id"`
+	ID           string    `gorm:"type:varchar(40);primaryKey;default:gen_random_uuid()" json:"id"`
 	GroupID      string    `gorm:"type:varchar(40);not null" json:"groupId"`
 	Group        Group     `gorm:"foreignKey:GroupID;references:ID" json:"group"`
 	ShopsID      string    `gorm:"type:varchar(40);not null" json:"shopsId"`
@@ -29,7 +29,7 @@ type User struct {
 }
 
 type Shop struct {
-	ID          string      `gorm:"type:varchar(40);primaryKey;default:uuid()" json:"id"`
+	ID          string      `gorm:"type:varchar(40);primaryKey;default:gen_random_uuid()" json:"id"`
 	Name        string      `gorm:"unique;not null" json:"name"`
 	Description *string     `gorm:"null" json:"description"`
 	CreatedBy   string      `gorm:"not null" json:"createdBy"`
@@ -42,7 +42,7 @@ type Shop struct {
 }
 
 type GroupFunction struct {
-	ID         string   `gorm:"type:varchar(40);primaryKey;default:uuid()" json:"id"`
+	ID         string   `gorm:"type:varchar(40);primaryKey;default:gen_random_uuid()" json:"id"`
 	Name       string   `gorm:"unique;not null" json:"name"`
 	FunctionID string   `gorm:"type:uuid;not null" json:"functionId"`
 	Function   Function `gorm:"foreignKey:FunctionID;references:ID" json:"function"`
@@ -54,14 +54,14 @@ type GroupFunction struct {
 }
 
 type Function struct {
-	ID             string          `gorm:"type:varchar(40);primaryKey;default:uuid()" json:"id"`
+	ID             string          `gorm:"type:varchar(40);primaryKey;default:gen_random_uuid()" json:"id"`
 	Name           string          `gorm:"unique;not null" json:"name"`
 	GroupFunctions []GroupFunction `gorm:"foreignKey:FunctionID" json:"groupFunctions"`
 	Tasks          []Task          `gorm:"foreignKey:FunctionID" json:"tasks"`
 }
 
 type Group struct {
-	ID             string          `gorm:"type:varchar(40);primaryKey;default:uuid()" json:"id"`
+	ID             string          `gorm:"type:varchar(40);primaryKey;default:gen_random_uuid()" json:"id"`
 	Name           string          `gorm:"unique;not null" json:"name"`
 	ShopsID        string          `gorm:"type:varchar(40);not null" json:"shopsId"`
 	Shop           Shop            `gorm:"foreignKey:ShopsID;references:ID" json:"shop"`
@@ -71,7 +71,7 @@ type Group struct {
 }
 
 type Task struct {
-	ID          string      `gorm:"type:varchar(40);primaryKey;default:uuid()" json:"id"`
+	ID          string      `gorm:"type:varchar(40);primaryKey;default:gen_random_uuid()" json:"id"`
 	Name        string      `gorm:"unique;not null" json:"name"`
 	FunctionID  string      `gorm:"type:varchar(40);not null" json:"functionId"`
 	Description *string     `gorm:"null" json:"description"`
@@ -80,7 +80,7 @@ type Task struct {
 }
 
 type GroupTask struct {
-	ID        string    `gorm:"type:varchar(40);primaryKey;default:uuid()" json:"id"`
+	ID        string    `gorm:"type:varchar(40);primaryKey;default:gen_random_uuid()" json:"id"`
 	Name      string    `gorm:"unique;not null" json:"name"`
 	GroupID   string    `gorm:"type:uuid;not null" json:"groupId"`
 	Group     Group     `gorm:"foreignKey:GroupID;references:ID" json:"group"`

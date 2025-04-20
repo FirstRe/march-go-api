@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	translation "march-inventory/cmd/app/i18n"
 
 	// "myapp/service"
 	"net/http"
@@ -68,7 +67,6 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 			_ = json.Unmarshal(body, &req)
 		}
-		translation.InitLocalizer(lang)
 		ctx := context.WithValue(c.Request.Context(), AuthString("auth"), auth)
 		ctx = context.WithValue(ctx, AuthString("userInfo"), userInfo)
 		ctx = context.WithValue(ctx, AuthString("lang"), lang)

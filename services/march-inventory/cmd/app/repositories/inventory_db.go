@@ -25,9 +25,9 @@ func (r inventoryRepositoryDB) GetInventories(searchParam string, isSerialNumber
 	query := r.gormDb.Model(&inventory).Where("deleted = ?", false)
 
 	if searchParam != "" && !isSerialNumber {
-		query = query.Where("name LIKE ?", searchParam)
+		query = query.Where("name ILIKE ?", searchParam)
 	} else if isSerialNumber {
-		query = query.Where("serial_number LIKE ?", searchParam)
+		query = query.Where("serial_number ILIKE ?", searchParam)
 	}
 
 	if params.Favorite != nil && *params.Favorite == types.FavoriteStatusLike {

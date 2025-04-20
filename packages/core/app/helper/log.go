@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog"
 )
@@ -24,7 +25,8 @@ type logs struct {
 }
 
 func LogContext(class string, name string) logs {
-	// Initialize zerolog with timestamp and service name
+	zerolog.TimeFieldFormat = time.RFC3339
+
 	baseLogger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	return logs{
 		logger: baseLogger,
@@ -55,4 +57,18 @@ func (l logs) Logger(value interface{}, name string, _isDebug ...bool) {
 		serviceLogger.Info().Msg("Processed log info values")
 	}
 
+}
+
+func (l logs) Loggers(name string, values ...interface{}) {
+	serviceLogger := l.logger
+	serviceLogger = serviceLogger.With().Str(l.class, l.name).Logger()
+	for _, value := range values {
+		claimsJSON, err := json.MarshalIndent(value, "", "  ")
+		if err != nil {
+			log.Println("Error marshaling value to JSON:", err)
+		}
+
+		serviceLogger = serviceLogger.With().RawJSON(name, claimsJSON).Logger()
+	}
+	serviceLogger.Info().Msg("Processed log info values")
 }

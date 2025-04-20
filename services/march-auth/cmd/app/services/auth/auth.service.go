@@ -238,7 +238,7 @@ func genToken(user *model.User) (*types.Token, error) {
 		ID:       user.ID,
 		DeviceId: deviceId,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 24 * 7 * 4).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * 24 * 7 * 4 * 99).Unix(),
 			IssuedAt:  time.Now().Unix(),
 		},
 	}

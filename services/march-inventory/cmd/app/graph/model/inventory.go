@@ -12,7 +12,7 @@ const (
 )
 
 type InventoryBrand struct {
-	ID          string      `gorm:"type:varchar(40);primaryKey;default:uuid()" json:"id"`
+	ID          string      `gorm:"type:varchar(40);primaryKey;default:gen_random_uuid()" json:"id"`
 	Name        string      `gorm:"unique" json:"name"`
 	ShopsID     string      `gorm:"type:varchar(40)" json:"shopsId"`
 	Description *string     `gorm:"type:varchar(300)" json:"description,omitempty"`
@@ -25,7 +25,7 @@ type InventoryBrand struct {
 }
 
 type InventoryType struct {
-	ID          string      `gorm:"type:varchar(40);primaryKey;default:uuid()" json:"id"`
+	ID          string      `gorm:"type:varchar(40);primaryKey;default:gen_random_uuid()" json:"id"`
 	Name        string      `gorm:"unique" json:"name"`
 	ShopsID     string      `gorm:"type:varchar(40)" json:"shopsId"`
 	Description *string     `gorm:"type:varchar(300)" json:"description,omitempty"`
@@ -38,7 +38,7 @@ type InventoryType struct {
 }
 
 type InventoryBranch struct {
-	ID          string      `gorm:"type:varchar(40);primaryKey;default:uuid()" json:"id"`
+	ID          string      `gorm:"type:varchar(40);primaryKey;default:gen_random_uuid()" json:"id"`
 	Name        string      `gorm:"unique" json:"name"`
 	ShopsID     string      `gorm:"type:varchar(40)" json:"shopsId"`
 	Description *string     `gorm:"type:varchar(300)" json:"description,omitempty"`
@@ -51,7 +51,7 @@ type InventoryBranch struct {
 }
 
 type Inventory struct {
-	ID                string          `gorm:"type:varchar(40);primaryKey;default:uuid()" json:"id"`
+	ID                string          `gorm:"type:varchar(40);primaryKey;default:gen_random_uuid()" json:"id"`
 	Name              string          `gorm:"unique" json:"name"`
 	InventoryTypeID   string          `gorm:"type:varchar(40)" json:"inventoryTypeId"`
 	InventoryType     InventoryType   `gorm:"foreignKey:InventoryTypeID;references:ID" json:"inventoryType"`
@@ -82,7 +82,7 @@ type Inventory struct {
 }
 
 type InventoryFile struct {
-	ID        string      `gorm:"type:varchar(40);primaryKey;default:uuid()" json:"id"`
+	ID        string      `gorm:"type:varchar(40);primaryKey;default:gen_random_uuid()" json:"id"`
 	Name      string      `gorm:"unique" json:"name"`
 	ShopsID   *string     `gorm:"type:varchar(40)" json:"shopsId,omitempty"`
 	Status    StatusFile  `gorm:"default:PASS" json:"status"`
