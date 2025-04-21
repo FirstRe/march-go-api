@@ -51,6 +51,7 @@ type ComplexityRoot struct {
 		CreateUser        func(childComplexity int, input types.UserInputParams) int
 		Login             func(childComplexity int, input types.LoginInputParams) int
 		OAuthURL          func(childComplexity int) int
+		SignInBypass      func(childComplexity int) int
 		SignInOAuth       func(childComplexity int, code string) int
 		SignOut           func(childComplexity int, id string) int
 		TokenExpire       func(childComplexity int, refreshToken string) int
@@ -118,6 +119,7 @@ type MutationResolver interface {
 	SignOut(ctx context.Context, id string) (*types.SignOutResponse, error)
 	VerifyAccessToken(ctx context.Context, token string) (*types.VerifyAccessTokenResponse, error)
 	SignInOAuth(ctx context.Context, code string) (*types.Token, error)
+	SignInBypass(ctx context.Context) (*types.Token, error)
 	OAuthURL(ctx context.Context) (*string, error)
 }
 type QueryResolver interface {
@@ -175,6 +177,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.OAuthURL(childComplexity), true
+
+	case "Mutation.signInBypass":
+		if e.complexity.Mutation.SignInBypass == nil {
+			break
+		}
+
+		return e.complexity.Mutation.SignInBypass(childComplexity), true
 
 	case "Mutation.signInOAuth":
 		if e.complexity.Mutation.SignInOAuth == nil {
@@ -513,6 +522,7 @@ extend type Mutation {
   verifyAccessToken(token: String!): VerifyAccessTokenResponse
     @auth(scopes: ["AnyAdminScope"])
   signInOAuth(code: String!): Token
+  signInBypass: Token
 }
 `, BuiltIn: false},
 	{Name: "../../schema/oAuth.graphqls", Input: `extend type Mutation {
@@ -1170,6 +1180,57 @@ func (ec *executionContext) fieldContext_Mutation_signInOAuth(ctx context.Contex
 	if fc.Args, err = ec.field_Mutation_signInOAuth_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_signInBypass(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_signInBypass(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SignInBypass(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*types.Token)
+	fc.Result = res
+	return ec.marshalOToken2ᚖmarchᚑauthᚋcmdᚋappᚋgraphᚋtypesᚐToken(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_signInBypass(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "access_token":
+				return ec.fieldContext_Token_access_token(ctx, field)
+			case "refresh_token":
+				return ec.fieldContext_Token_refresh_token(ctx, field)
+			case "username":
+				return ec.fieldContext_Token_username(ctx, field)
+			case "userId":
+				return ec.fieldContext_Token_userId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -4300,6 +4361,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "signInOAuth":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_signInOAuth(ctx, field)
+			})
+		case "signInBypass":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_signInBypass(ctx, field)
 			})
 		case "oAuthUrl":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {

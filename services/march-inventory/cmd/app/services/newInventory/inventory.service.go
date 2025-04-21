@@ -223,7 +223,8 @@ func (i inventoryServiceRedis) GetInventories(params *types.ParamsInventory, use
 func (i inventoryServiceRedis) FavoriteInventory(id string, userInfo middlewares.UserClaims) (*types.MutationInventoryResponse, error) {
 	logctx := helper.LogContext(ClassName, "FavoriteInventory")
 	logctx.Logger(id, "id")
-	inventory, err := i.inventoryRepo.FindFirstInventory(map[string]interface{}{"id": id})
+	preload := []string{"InventoryType", "InventoryBranch", "InventoryBrand"}
+	inventory, err := i.inventoryRepo.FindFirstInventory(map[string]interface{}{"id": id}, preload)
 
 	i.DeleteInventoryCache("inventory:shopsId:" + userInfo.UserInfo.ShopsID)
 	logctx.Logger(inventory, "favoriteNaja")
@@ -277,8 +278,8 @@ func (i inventoryServiceRedis) UpsertInventory(input types.UpsertInventoryInput,
 	logctx.Logger(input, "input")
 
 	name := input.Name + "|" + input.InventoryBranchID + "|" + userInfo.UserInfo.ShopsID
-
-	findDup, err := i.inventoryRepo.FindFirstInventory(map[string]interface{}{"name": name, "shops_id": userInfo.UserInfo.ShopsID})
+	preload := []string{"InventoryType", "InventoryBranch", "InventoryBrand"}
+	findDup, err := i.inventoryRepo.FindFirstInventory(map[string]interface{}{"name": name, "shops_id": userInfo.UserInfo.ShopsID}, preload)
 
 	if input.Name == "" {
 		reponseError := types.MutationInventoryResponse{

@@ -39,6 +39,11 @@ func (r *mutationResolver) SignInOAuth(ctx context.Context, code string) (*types
 	return authService.SignInOAuth(code)
 }
 
+// SignInBypass is the resolver for the signInBypass field.
+func (r *mutationResolver) SignInBypass(ctx context.Context) (*types.Token, error) {
+	return authService.SignInBypass()
+}
+
 // !!! WARNING !!!
 // The code below was going to be deleted when updating resolvers. It has been copied here so you have
 // one last chance to move it out of harms way if you want. There are two reasons this happens:

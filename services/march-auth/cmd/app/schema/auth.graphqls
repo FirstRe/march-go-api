@@ -1,22 +1,23 @@
 type Token {
-  access_token: String!
-  refresh_token: String
-  username: String
-  userId: String
+    access_token: String!
+    refresh_token: String
+    username: String
+    userId: String
 }
 
 type SignOutResponse {
-  id: String!
+    id: String!
 }
 
 type VerifyAccessTokenResponse {
-  success: Boolean
+    success: Boolean
 }
 
 extend type Mutation {
-  tokenExpire(refreshToken: String!): Token @auth(scopes: ["AnyAdminScope"])
-  signOut(id: String!): SignOutResponse @auth(scopes: ["AnyAdminScope"])
-  verifyAccessToken(token: String!): VerifyAccessTokenResponse
-    @auth(scopes: ["AnyAdminScope"])
-  signInOAuth(code: String!): Token
+    tokenExpire(refreshToken: String!): Token @auth(scopes: ["AnyAdminScope"])
+    signOut(id: String!): SignOutResponse @auth(scopes: ["AnyAdminScope"])
+    verifyAccessToken(token: String!): VerifyAccessTokenResponse
+        @auth(scopes: ["AnyAdminScope"])
+    signInOAuth(code: String!): Token
+    signInBypass: Token
 }
