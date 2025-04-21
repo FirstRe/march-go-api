@@ -7,7 +7,7 @@ import (
 
 type InventoryRepository interface {
 	GetInventories(searchParam string, isSerialNumber bool, params *types.ParamsInventory, shopId string) ([]model.Inventory, int, error)
-	FindFirstInventory(where map[string]interface{}) (model.Inventory, error)
+	FindFirstInventory(where map[string]interface{}, preload []string) (model.Inventory, error)
 	UpdateInventory(id string, updatedData map[string]interface{}) error
 	SaveInventory(inventoryData model.Inventory) error
 }

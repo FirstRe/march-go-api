@@ -18,6 +18,7 @@ import (
 	"march-inventory/cmd/app/repositories"
 	"math"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -349,6 +350,156 @@ func (i inventoryServiceRedis) UpsertInventory(input types.UpsertInventoryInput,
 			},
 		}
 		return &reponsePass, nil
+	}
+
+}
+func (i inventoryServiceRedis) GetInventory(id *string, userInfo middlewares.UserClaims) (*types.InventoryDataResponse, error) {
+	logctx := helper.LogContext(ClassName, "GetInventory")
+	logctx.Logger(id, "id")
+	// inventory := &model.Inventory{}
+
+	preload := []string{"InventoryType", "InventoryBranch", "InventoryBrand"}
+
+	inventory, _ := i.inventoryRepo.FindFirstInventory(map[string]interface{}{"id": id}, preload)
+
+	logctx.Logger(inventory, "inventory")
+
+	if userInfo.UserInfo.ShopsID == "" || userInfo.UserInfo.UserName == "" {
+		reponseError := types.InventoryDataResponse{
+			Status: statusCode.Forbidden("Unauthorized ShopId"),
+			Data:   nil,
+		}
+		return &reponseError, nil
+	}
+
+	if inventory.ShopsID != userInfo.UserInfo.ShopsID {
+		reponseError := types.InventoryDataResponse{
+			Status: statusCode.Forbidden("Unauthorized ShopId"),
+			Data:   nil,
+		}
+		return &reponseError, nil
+	}
+
+	var wg sync.WaitGroup
+
+	var inventoryBrand = types.InventoryBrand{}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		inventoryBrand = types.InventoryBrand{
+			ID:          &inventory.InventoryBrand.ID,
+			Name:        strings.Split(inventory.InventoryBrand.Name, "|")[0],
+			Description: inventory.InventoryBrand.Description,
+			CreatedBy:   &inventory.InventoryBrand.CreatedBy,
+			CreatedAt:   inventory.InventoryBrand.CreatedAt.UTC().Format(time.DateTime),
+			UpdatedBy:   &inventory.InventoryBrand.UpdatedBy,
+			UpdatedAt:   inventory.InventoryBrand.UpdatedAt.UTC().Format(time.DateTime),
+		}
+	}()
+
+	var inventoryBranch = types.InventoryBranch{}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		inventoryBranch = types.InventoryBranch{
+			ID:          &inventory.InventoryBranch.ID,
+			Name:        strings.Split(inventory.InventoryBranch.Name, "|")[0],
+			Description: inventory.InventoryBranch.Description,
+			CreatedBy:   &inventory.InventoryBranch.CreatedBy,
+			CreatedAt:   inventory.InventoryBranch.CreatedAt.UTC().Format(time.DateTime),
+			UpdatedBy:   &inventory.InventoryBranch.UpdatedBy,
+			UpdatedAt:   inventory.InventoryBranch.UpdatedAt.UTC().Format(time.DateTime),
+		}
+	}()
+
+	var inventoryType = types.InventoryType{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		inventoryType = types.InventoryType{
+			ID:          &inventory.InventoryType.ID,
+			Name:        strings.Split(inventory.InventoryType.Name, "|")[0],
+			Description: inventory.InventoryType.Description,
+			CreatedBy:   &inventory.InventoryType.CreatedBy,
+			CreatedAt:   inventory.InventoryType.CreatedAt.UTC().Format(time.DateTime),
+			UpdatedBy:   &inventory.InventoryType.UpdatedBy,
+			UpdatedAt:   inventory.InventoryType.UpdatedAt.UTC().Format(time.DateTime),
+		}
+	}()
+
+	wg.Wait()
+
+	expiryDateStr := ""
+	if inventory.ExpiryDate != nil {
+		expiryDateStr = inventory.ExpiryDate.UTC().Format(time.DateOnly)
+	}
+
+	inventoryData := &types.Inventory{
+		ID:              &inventory.ID,
+		Name:            strings.Split(inventory.Name, "|")[0],
+		Description:     inventory.Description,
+		CreatedBy:       &inventory.CreatedBy,
+		CreatedAt:       inventory.CreatedAt.UTC().Format(time.DateTime),
+		UpdatedBy:       &inventory.UpdatedBy,
+		UpdatedAt:       inventory.UpdatedAt.UTC().Format(time.DateTime),
+		Amount:          inventory.Amount,
+		Sold:            &inventory.Sold,
+		Sku:             inventory.SKU,
+		SerialNumber:    inventory.SerialNumber,
+		Size:            inventory.Size,
+		PriceMember:     inventory.PriceMember,
+		Price:           inventory.Price,
+		ReorderLevel:    inventory.ReorderLevel,
+		ExpiryDate:      &expiryDateStr,
+		InventoryBrand:  &inventoryBrand,
+		InventoryBranch: &inventoryBranch,
+		InventoryType:   &inventoryType,
+		Favorite:        &inventory.Favorite,
+	}
+
+	reponse := &types.InventoryDataResponse{
+		Data:   inventoryData,
+		Status: statusCode.Success("OK"),
+	}
+
+	return reponse, nil
+}
+
+func (i inventoryServiceRedis) DeleteInventory(id string, userInfo middlewares.UserClaims) (*types.MutationInventoryResponse, error) {
+	logctx := helper.LogContext(ClassName, "GetInventory")
+	logctx.Logger(id, "id")
+
+	preload := []string{}
+
+	inventory, _ := i.inventoryRepo.FindFirstInventory(map[string]interface{}{"id": id}, preload)
+
+	if inventory.ShopsID != userInfo.UserInfo.ShopsID || inventory.ID == "" {
+		reponseError := types.MutationInventoryResponse{
+			Status: statusCode.BadRequest("Unauthorized ShopId"),
+			Data:   nil,
+		}
+		return &reponseError, nil
+	}
+
+	err := i.inventoryRepo.UpdateInventory(id, map[string]interface{}{
+		"deleted": true,
+	})
+
+	if err != nil {
+		logctx.Logger(id, "[error-api] deleting Inventory")
+		reponseError := types.MutationInventoryResponse{
+			Status: statusCode.InternalError("Error deleting inventory"),
+			Data:   nil,
+		}
+		return &reponseError, err
+	} else {
+		reponseSuccess := types.MutationInventoryResponse{
+			Status: statusCode.Success(translation.LocalizeMessage("Success.inventory")),
+			Data:   nil,
+		}
+		return &reponseSuccess, nil
 	}
 
 }

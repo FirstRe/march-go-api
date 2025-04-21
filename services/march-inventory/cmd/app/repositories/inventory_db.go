@@ -65,7 +65,12 @@ func (r inventoryRepositoryDB) GetInventories(searchParam string, isSerialNumber
 	return inventory, totalRow, nil
 }
 
-func (r inventoryRepositoryDB) FindFirstInventory(where map[string]interface{}) (inventory model.Inventory, err error) {
+func (r inventoryRepositoryDB) FindFirstInventory(where map[string]interface{}, preload []string) (inventory model.Inventory, err error) {
+	query := r.gormDb.Where(where)
+	for _, v := range preload {
+		query = query.Preload(v)
+	}
+
 	if err := r.gormDb.Where(where).First(&inventory).Error; err != nil {
 		return model.Inventory{}, err
 	}

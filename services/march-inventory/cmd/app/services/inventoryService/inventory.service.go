@@ -886,8 +886,8 @@ func UploadCsv(file graphql.Upload, userInfo middlewares.UserClaims) (*types.Upl
 	defer csvFile.Close()
 
 	csvReader := csv.NewReader(csvFile)
-	csvReader.FieldsPerRecord = -1 
-	csvReader.LazyQuotes = true   
+	csvReader.FieldsPerRecord = -1
+	csvReader.LazyQuotes = true
 	records, err := csvReader.ReadAll()
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse file as CSV")
@@ -905,7 +905,7 @@ func UploadCsv(file graphql.Upload, userInfo middlewares.UserClaims) (*types.Upl
 
 	results := []map[string]string{}
 
-	for _, row := range records[1:] { 
+	for _, row := range records[1:] {
 		if len(row) != len(headers) {
 			return nil, fmt.Errorf("row length mismatch in CSV")
 		}
@@ -1147,8 +1147,8 @@ func UploadCsv(file graphql.Upload, userInfo middlewares.UserClaims) (*types.Upl
 		})
 	}
 
-	var validData []any
-	var invalidData []any
+	var validData []*types.DataCSVUploaded
+	var invalidData []*types.DataCSVUploaded
 
 	for _, d := range validatedData {
 		if d.IsValid {
@@ -1156,6 +1156,10 @@ func UploadCsv(file graphql.Upload, userInfo middlewares.UserClaims) (*types.Upl
 		} else {
 			invalidData = append(invalidData, d)
 		}
+	}
+
+	if len(invalidData) == 0 {
+		//TODO: save to DB
 	}
 
 	log.Printf("invalidDataNaja: %+v", invalidData)
