@@ -183,7 +183,7 @@ func GetInventoryTypes(params *types.ParamsInventoryType, userInfo middlewares.U
 	}
 	log.Printf("searchParam: %+v", searchParam)
 
-	if err := gormDb.Repos.Model(&inventoryTypes).Where("name LIKE ?", searchParam).Not("deleted = ?", true).Order("created_at asc").Find(&inventoryTypes).Error; err != nil {
+	if err := gormDb.Repos.Model(&inventoryTypes).Where("name ILIKE ?", searchParam).Not("deleted = ?", true).Order("created_at asc").Find(&inventoryTypes).Error; err != nil {
 		logctx.Logger([]interface{}{err}, "err GetInventoryTypes Model Data")
 	}
 	logctx.Logger([]interface{}{inventoryTypes}, "inventoryTypes")

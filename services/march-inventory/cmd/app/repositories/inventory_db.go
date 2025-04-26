@@ -65,30 +65,76 @@ func (r inventoryRepositoryDB) GetInventories(searchParam string, isSerialNumber
 	return inventory, totalRow, nil
 }
 
-func (r inventoryRepositoryDB) FindFirstInventory(where map[string]interface{}, preload []string) (inventory model.Inventory, err error) {
-	query := r.gormDb.Where(where)
-	for _, v := range preload {
-		query = query.Preload(v)
+func (r inventoryRepositoryDB) mapParams(params FindParams) *gorm.DB {
+	query := r.gormDb
+
+	for _, whereArgs := range params.WhereArgs {
+		if whereArgs.Where != nil {
+			switch where := whereArgs.Where.(type) {
+			case string:
+				query = query.Where(where, whereArgs.WhereArgs...)
+			case map[string]interface{}:
+				query = query.Where(where)
+			default:
+				query = query.Where(where)
+			}
+		}
+
 	}
 
-	if err := r.gormDb.Where(where).First(&inventory).Error; err != nil {
+	for _, preload := range params.Preload {
+		query = query.Preload(preload)
+	}
+
+	if params.SelectField != nil {
+		query = query.Select(params.SelectField)
+	}
+
+	if params.OrderBy != "" {
+		query = query.Order(params.OrderBy)
+	}
+
+	if params.Limit != nil {
+		query = query.Limit(*params.Limit)
+	}
+
+	if params.Offset != nil {
+		query = query.Offset(*params.Offset)
+	}
+
+	return query
+}
+
+func (r inventoryRepositoryDB) FindInventory(params FindParams) (inventories []model.Inventory, err error) {
+	query := r.mapParams(params)
+	if err := query.Find(&inventories).Error; err != nil {
+		return nil, err
+	}
+	return inventories, nil
+}
+
+func (r inventoryRepositoryDB) FindFirstInventory(params FindParams) (inventory model.Inventory, err error) {
+	query := r.mapParams(params)
+	if err := query.First(&inventory).Error; err != nil {
 		return model.Inventory{}, err
 	}
 	return inventory, nil
 }
 
 func (r inventoryRepositoryDB) UpdateInventory(id string, updatedData map[string]interface{}) error {
-	if err := r.gormDb.Model(&model.Inventory{}).
+	return r.gormDb.Model(&model.Inventory{}).
 		Where("id = ?", id).
-		Updates(updatedData).Error; err != nil {
-		return err
-	}
-	return nil
+		Updates(updatedData).Error
 }
 
 func (r inventoryRepositoryDB) SaveInventory(inventoryData model.Inventory) error {
-	if err := r.gormDb.Omit("CreatedAt").Save(&inventoryData).Error; err != nil {
-		return err
-	}
-	return nil
+	return r.gormDb.Omit("CreatedAt").Save(&inventoryData).Error
+}
+
+func (r inventoryRepositoryDB) DeleteSubInventory(checkIn interface{}, id string) error {
+	return r.gormDb.Where("id = ?", id).Delete(&checkIn).Error
+}
+
+func (r inventoryRepositoryDB) RecoverySubInventory(checkIn interface{}, id string, updatedData map[string]interface{}, updatedBy string) error {
+	return r.gormDb.Model(&checkIn).Where("id = ?", id).Updates(map[string]interface{}{"deleted": false, "updated_by": updatedBy}).Error
 }

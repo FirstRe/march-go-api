@@ -37,7 +37,7 @@ func (r *mutationResolver) DeleteInventory(ctx context.Context, id string) (*typ
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
 
-	return inventoryService.DeleteInventory(id, userInfo)
+	return r.InventoryService.DeleteInventory(id, userInfo)
 }
 
 // FavoriteInventory is the resolver for the favoriteInventory field.
@@ -55,7 +55,7 @@ func (r *mutationResolver) RecoveryHardDeleted(ctx context.Context, input types.
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
 
-	return inventoryService.RecoveryHardDeleted(input, userInfo)
+	return r.InventoryService.RecoveryHardDeleted(input, userInfo)
 }
 
 // GetInventoryNames is the resolver for the getInventoryNames field.
@@ -63,7 +63,7 @@ func (r *queryResolver) GetInventoryNames(ctx context.Context) (*types.Inventory
 	logctx := helper.LogContext(ClassName, "GetInventories")
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
-	return inventoryService.GetInventoryNames(userInfo)
+	return r.InventoryService.GetInventoryNames(userInfo)
 }
 
 // GetInventory is the resolver for the getInventory field.
@@ -71,7 +71,7 @@ func (r *queryResolver) GetInventory(ctx context.Context, id *string) (*types.In
 	logctx := helper.LogContext(ClassName, "GetInventory")
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
-	return inventoryService.GetInventory(id, userInfo)
+	return r.InventoryService.GetInventory(id, userInfo)
 }
 
 // GetInventories is the resolver for the getInventories field.
@@ -88,5 +88,4 @@ func (r *queryResolver) GetInventoryAllDeleted(ctx context.Context) (*types.Dele
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
 	return inventoryService.GetInventoryAllDeleted(userInfo)
-	// panic(fmt.Errorf("not implemented: GetInventoryAllDeleted - getInventoryAllDeleted"))
 }

@@ -224,7 +224,10 @@ func (i inventoryServiceRedis) FavoriteInventory(id string, userInfo middlewares
 	logctx := helper.LogContext(ClassName, "FavoriteInventory")
 	logctx.Logger(id, "id")
 	preload := []string{"InventoryType", "InventoryBranch", "InventoryBrand"}
-	inventory, err := i.inventoryRepo.FindFirstInventory(map[string]interface{}{"id": id}, preload)
+	inventory, err := i.inventoryRepo.FindFirstInventory(repositories.FindParams{
+		WhereArgs: []repositories.WhereArgs{{Where: map[string]interface{}{"id": id}}},
+		Preload:   preload,
+	})
 
 	i.DeleteInventoryCache("inventory:shopsId:" + userInfo.UserInfo.ShopsID)
 	logctx.Logger(inventory, "favoriteNaja")
@@ -279,7 +282,11 @@ func (i inventoryServiceRedis) UpsertInventory(input types.UpsertInventoryInput,
 
 	name := input.Name + "|" + input.InventoryBranchID + "|" + userInfo.UserInfo.ShopsID
 	preload := []string{"InventoryType", "InventoryBranch", "InventoryBrand"}
-	findDup, err := i.inventoryRepo.FindFirstInventory(map[string]interface{}{"name": name, "shops_id": userInfo.UserInfo.ShopsID}, preload)
+
+	findDup, err := i.inventoryRepo.FindFirstInventory(repositories.FindParams{
+		WhereArgs: []repositories.WhereArgs{{Where: map[string]interface{}{"name": name, "shops_id": userInfo.UserInfo.ShopsID}}},
+		Preload:   preload,
+	})
 
 	if input.Name == "" {
 		reponseError := types.MutationInventoryResponse{
@@ -361,7 +368,10 @@ func (i inventoryServiceRedis) GetInventory(id *string, userInfo middlewares.Use
 
 	preload := []string{"InventoryType", "InventoryBranch", "InventoryBrand"}
 
-	inventory, _ := i.inventoryRepo.FindFirstInventory(map[string]interface{}{"id": id}, preload)
+	inventory, _ := i.inventoryRepo.FindFirstInventory(repositories.FindParams{
+		WhereArgs: []repositories.WhereArgs{{Where: map[string]interface{}{"id": id}}},
+		Preload:   preload,
+	})
 
 	logctx.Logger(inventory, "inventory")
 
@@ -469,12 +479,15 @@ func (i inventoryServiceRedis) GetInventory(id *string, userInfo middlewares.Use
 }
 
 func (i inventoryServiceRedis) DeleteInventory(id string, userInfo middlewares.UserClaims) (*types.MutationInventoryResponse, error) {
-	logctx := helper.LogContext(ClassName, "GetInventory")
+	logctx := helper.LogContext(ClassName, "DeleteInventory")
 	logctx.Logger(id, "id")
 
 	preload := []string{}
 
-	inventory, _ := i.inventoryRepo.FindFirstInventory(map[string]interface{}{"id": id}, preload)
+	inventory, _ := i.inventoryRepo.FindFirstInventory(repositories.FindParams{
+		WhereArgs: []repositories.WhereArgs{{Where: map[string]interface{}{"id": id}}},
+		Preload:   preload,
+	})
 
 	if inventory.ShopsID != userInfo.UserInfo.ShopsID || inventory.ID == "" {
 		reponseError := types.MutationInventoryResponse{
@@ -503,4 +516,341 @@ func (i inventoryServiceRedis) DeleteInventory(id string, userInfo middlewares.U
 		return &reponseSuccess, nil
 	}
 
+}
+
+func (i inventoryServiceRedis) RecoveryHardDeleted(input types.RecoveryHardDeletedInput, userInfo middlewares.UserClaims) (*types.RecoveryHardDeletedResponse, error) {
+	logctx := helper.LogContext(ClassName, "RecoveryHardDeleted")
+	switch input.Type {
+	case types.DeletedTypeInventory:
+		{
+			checkIn, err := i.inventoryRepo.FindFirstInventory(repositories.FindParams{
+				WhereArgs: []repositories.WhereArgs{{Where: map[string]interface{}{"id": input.ID}}},
+			})
+
+			if err != nil {
+				logctx.Logger(err.Error(), "[error-api] Recovery Hard Deleted")
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.InternalError("Error Recovery Hard Deleted"),
+					Data:   nil,
+				}
+				return &reponseError, err
+			}
+			logctx.Logger(checkIn.Deleted, "checkIn")
+
+			if checkIn.ShopsID != userInfo.UserInfo.ShopsID || checkIn.Deleted == false {
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.BadRequest("Unauthorized ShopId"),
+					Data:   nil,
+				}
+				return &reponseError, nil
+			}
+			return subRecovery(&checkIn, input, userInfo, i)
+		}
+	case types.DeletedTypeInventoryBranch:
+		{
+			checkIn, err := i.inventoryRepo.FindFirstInventoryBranch(repositories.FindParams{
+				WhereArgs: []repositories.WhereArgs{{Where: map[string]interface{}{"id": input.ID}}},
+			})
+			if err != nil {
+				logctx.Logger(err.Error(), "[error-api] Recovery Hard Deleted")
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.InternalError("Error Recovery Hard Deleted"),
+					Data:   nil,
+				}
+				return &reponseError, err
+			}
+			logctx.Logger(checkIn, "checkIn")
+
+			if checkIn.ShopsID != userInfo.UserInfo.ShopsID || checkIn.Deleted == false {
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.BadRequest("Unauthorized ShopId"),
+					Data:   nil,
+				}
+				return &reponseError, nil
+			}
+			return subRecovery(&checkIn, input, userInfo, i)
+		}
+	case types.DeletedTypeInventoryBrand:
+		{
+			checkIn, err := i.inventoryRepo.FindFirstInventoryBrand(repositories.FindParams{
+				WhereArgs: []repositories.WhereArgs{{Where: map[string]interface{}{"id": input.ID}}},
+			})
+
+			if err != nil {
+				logctx.Logger(err.Error(), "[error-api] Recovery Hard Deleted")
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.InternalError("Error Recovery Hard Deleted"),
+					Data:   nil,
+				}
+				return &reponseError, err
+			}
+			logctx.Logger(checkIn, "checkIn")
+
+			if checkIn.ShopsID != userInfo.UserInfo.ShopsID || checkIn.Deleted == false {
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.BadRequest("Unauthorized ShopId"),
+					Data:   nil,
+				}
+				return &reponseError, nil
+			}
+			return subRecovery(&checkIn, input, userInfo, i)
+		}
+	default:
+		checkIn, err := i.inventoryRepo.FindFirstInventoryType(repositories.FindParams{
+			WhereArgs: []repositories.WhereArgs{{Where: map[string]interface{}{"id": input.ID}}},
+		})
+		if err != nil {
+			logctx.Logger(err.Error(), "[error-api] Recovery Hard Deleted")
+			reponseError := types.RecoveryHardDeletedResponse{
+				Status: statusCode.InternalError("Error Recovery Hard Deleted"),
+				Data:   nil,
+			}
+			return &reponseError, err
+		}
+		logctx.Logger(checkIn, "checkIn")
+
+		if checkIn.ShopsID != userInfo.UserInfo.ShopsID || checkIn.Deleted == false {
+			reponseError := types.RecoveryHardDeletedResponse{
+				Status: statusCode.BadRequest("Unauthorized ShopId"),
+				Data:   nil,
+			}
+			return &reponseError, nil
+		}
+		return subRecovery(&checkIn, input, userInfo, i)
+	}
+}
+
+func subRecovery(checkIn interface{}, input types.RecoveryHardDeletedInput, userInfo middlewares.UserClaims, i inventoryServiceRedis) (*types.RecoveryHardDeletedResponse, error) {
+	logctx := helper.LogContext(ClassName, "RecoveryHardDeletedSub")
+
+	switch input.Mode {
+	case types.DeletedModeDelete:
+		{
+			err := i.inventoryRepo.DeleteSubInventory(checkIn, input.ID)
+			if err != nil {
+				logctx.Logger(err.Error(), "[error-api] Recovery Hard Deleted checkIn")
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.InternalError("Error Recovery Hard Deleted checkIn"),
+					Data:   nil,
+				}
+				return &reponseError, err
+			}
+
+			response := types.RecoveryHardDeletedResponse{
+				Status: statusCode.Success(translation.LocalizeMessage("Success.trash.delete")),
+				Data:   nil,
+			}
+
+			return &response, nil
+		}
+	default:
+		{
+			err := i.inventoryRepo.RecoverySubInventory(checkIn, input.ID, map[string]interface{}{"deleted": false}, userInfo.UserInfo.UserName)
+			if err != nil {
+				logctx.Logger(err.Error(), "[error-api] Recovery Hard Deleted checkIn")
+				reponseError := types.RecoveryHardDeletedResponse{
+					Status: statusCode.InternalError("Error Recovery Hard Deleted checkIn"),
+					Data:   nil,
+				}
+				return &reponseError, err
+			}
+
+			response := types.RecoveryHardDeletedResponse{
+				Status: statusCode.Success(translation.LocalizeMessage("Success.trash.recovery")),
+				Data:   nil,
+			}
+
+			return &response, nil
+		}
+	}
+}
+
+func (i inventoryServiceRedis) GetInventoryNames(userInfo middlewares.UserClaims) (*types.InventoryNameResponse, error) {
+	logctx := LogContext(ClassName, "GetInventoryNames")
+	findParams := repositories.FindParams{
+		WhereArgs:   []repositories.WhereArgs{{Where: map[string]interface{}{"shops_id": userInfo.UserInfo.ShopsID}}},
+		SelectField: []string{"id", "name"},
+	}
+
+	inventories, _ := i.inventoryRepo.FindInventory(findParams)
+
+	logctx.Logger(inventories, "inventories")
+	inventoryName := make([]*types.InventoryName, len(inventories))
+
+	for d, inventory := range inventories {
+		inventoryName[d] = &types.InventoryName{
+			ID:   &inventory.ID,
+			Name: &strings.Split(inventory.Name, "|")[0],
+		}
+	}
+
+	reponseSuccess := types.InventoryNameResponse{
+		Status: statusCode.Success("OK"),
+		Data:   inventoryName,
+	}
+	return &reponseSuccess, nil
+
+}
+
+func (i inventoryServiceRedis) GetInventoryAllDeleted(userInfo middlewares.UserClaims) (*types.DeletedInventoryResponse, error) {
+	start := time.Now()
+	logctx := LogContext(ClassName, "GetInventoryAllDeleted")
+	logctx.Logger(userInfo, "userInfo")
+
+	var wg sync.WaitGroup
+	errChan := make(chan error, 4)
+
+	// Channels for concurrent data
+	chInventory := make(chan []*types.DeletedInventoryType, 1)
+	chType := make(chan []*types.DeletedInventoryType, 1)
+	chBrand := make(chan []*types.DeletedInventoryType, 1)
+	chBranch := make(chan []*types.DeletedInventoryType, 1)
+
+	// Goroutine for Inventories
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(chInventory)
+
+		inventories, err := i.inventoryRepo.FindInventory(repositories.FindParams{
+			WhereArgs:   []repositories.WhereArgs{{Where: map[string]interface{}{"shops_id": userInfo.UserInfo.ShopsID, "deleted": true}}},
+			SelectField: []string{"id", "name"},
+			OrderBy:     "updated_at desc",
+		})
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		logctx.Logger(inventories, "inventories")
+		deletedInventory := make([]*types.DeletedInventoryType, len(inventories))
+		for d, inventory := range inventories {
+			deletedInventory[d] = &types.DeletedInventoryType{
+				ID:        &inventory.ID,
+				Name:      &strings.Split(inventory.Name, "|")[0],
+				CreatedBy: &inventory.CreatedBy,
+				UpdatedBy: &inventory.UpdatedBy,
+				UpdatedAt: inventory.UpdatedAt.UTC().Format(time.DateTime),
+				CreatedAt: inventory.CreatedAt.UTC().Format(time.DateTime),
+			}
+		}
+		chInventory <- deletedInventory
+	}()
+
+	// Goroutine for Types
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(chType)
+
+		inventoryTypes, err := i.inventoryRepo.FindInventoryType(repositories.FindParams{
+			WhereArgs:   []repositories.WhereArgs{{Where: map[string]interface{}{"shops_id": userInfo.UserInfo.ShopsID, "deleted": true}}},
+			SelectField: []string{"id", "name"},
+			OrderBy:     "updated_at desc",
+		})
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		logctx.Logger(inventoryTypes, "inventoryTypes")
+		deletedInventoryType := make([]*types.DeletedInventoryType, len(inventoryTypes))
+		for d, inventoryType := range inventoryTypes {
+			deletedInventoryType[d] = &types.DeletedInventoryType{
+				ID:        &inventoryType.ID,
+				Name:      &strings.Split(inventoryType.Name, "|")[0],
+				CreatedBy: &inventoryType.CreatedBy,
+				UpdatedBy: &inventoryType.UpdatedBy,
+				UpdatedAt: inventoryType.UpdatedAt.UTC().Format(time.DateTime),
+				CreatedAt: inventoryType.CreatedAt.UTC().Format(time.DateTime),
+			}
+		}
+		chType <- deletedInventoryType
+	}()
+
+	// Goroutine for Brands
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(chBrand)
+
+		inventoryBrands, err := i.inventoryRepo.FindInventoryBrand(repositories.FindParams{
+			WhereArgs:   []repositories.WhereArgs{{Where: map[string]interface{}{"shops_id": userInfo.UserInfo.ShopsID, "deleted": true}}},
+			SelectField: []string{"id", "name"},
+			OrderBy:     "updated_at desc",
+		})
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		logctx.Logger(inventoryBrands, "inventoryBrands")
+		deletedInventoryBrand := make([]*types.DeletedInventoryType, len(inventoryBrands))
+		for d, inventoryBrand := range inventoryBrands {
+			deletedInventoryBrand[d] = &types.DeletedInventoryType{
+				ID:        &inventoryBrand.ID,
+				Name:      &strings.Split(inventoryBrand.Name, "|")[0],
+				CreatedBy: &inventoryBrand.CreatedBy,
+				UpdatedBy: &inventoryBrand.UpdatedBy,
+				UpdatedAt: inventoryBrand.UpdatedAt.UTC().Format(time.DateTime),
+				CreatedAt: inventoryBrand.CreatedAt.UTC().Format(time.DateTime),
+			}
+		}
+		chBrand <- deletedInventoryBrand
+	}()
+
+	// Goroutine for Branches
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(chBranch)
+
+		inventoryBranches, err := i.inventoryRepo.FindInventoryBranch(repositories.FindParams{
+			WhereArgs:   []repositories.WhereArgs{{Where: map[string]interface{}{"shops_id": userInfo.UserInfo.ShopsID, "deleted": true}}},
+			SelectField: []string{"id", "name"},
+			OrderBy:     "updated_at desc",
+		})
+		if err != nil {
+			errChan <- err
+			return
+		}
+		logctx.Logger(inventoryBranches, "inventoryBranches")
+		deletedInventoryBranch := make([]*types.DeletedInventoryType, len(inventoryBranches))
+		for d, inventoryBranch := range inventoryBranches {
+			deletedInventoryBranch[d] = &types.DeletedInventoryType{
+				ID:        &inventoryBranch.ID,
+				Name:      &strings.Split(inventoryBranch.Name, "|")[0],
+				CreatedBy: &inventoryBranch.CreatedBy,
+				UpdatedBy: &inventoryBranch.UpdatedBy,
+				UpdatedAt: inventoryBranch.UpdatedAt.UTC().Format(time.DateTime),
+				CreatedAt: inventoryBranch.CreatedAt.UTC().Format(time.DateTime),
+			}
+		}
+		chBranch <- deletedInventoryBranch
+	}()
+
+	wg.Wait()
+	close(errChan)
+
+	select {
+	case err := <-errChan:
+		if err != nil {
+			return nil, err
+		}
+	default:
+	}
+
+	response := types.DeletedInventoryResponse{
+		Data: &types.DeletedInventory{
+			Inventory: <-chInventory,
+			Type:      <-chType,
+			Brand:     <-chBrand,
+			Branch:    <-chBranch,
+		},
+		Status: statusCode.Success("OK"),
+	}
+
+	elapsed := time.Since(start)
+	log.Println("Execution time:", elapsed)
+	return &response, nil
 }
