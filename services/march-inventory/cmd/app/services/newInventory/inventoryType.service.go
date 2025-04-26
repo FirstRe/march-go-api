@@ -104,7 +104,7 @@ func (i inventoryServiceRedis) DeleteInventoryType(id string, userInfo middlewar
 	logctx.Logger(id, "id")
 
 	inventoryType, err := i.inventoryRepo.FindFirstInventoryType(repositories.FindParams{
-		WhereArgs: []repositories.WhereArgs{{Where: map[string]interface{}{"shops_id": userInfo.UserInfo.ShopsID}}},
+		WhereArgs: []repositories.WhereArgs{{Where: map[string]interface{}{"id": id}}},
 	})
 
 	if err != nil {
@@ -140,6 +140,8 @@ func (i inventoryServiceRedis) DeleteInventoryType(id string, userInfo middlewar
 		logctx.Logger(id, "Inventory with InventoryType not found")
 		//update deleted
 		inventoryType.Deleted = true
+		logctx.Logger(inventoryType, "inventoryTypenot found")
+
 		err = i.inventoryRepo.SaveInventoryType(inventoryType)
 
 		if err != nil {
