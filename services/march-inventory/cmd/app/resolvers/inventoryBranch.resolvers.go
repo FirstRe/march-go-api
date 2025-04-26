@@ -9,7 +9,6 @@ import (
 	"core/app/helper"
 	"core/app/middlewares"
 	"march-inventory/cmd/app/graph/types"
-	"march-inventory/cmd/app/services/inventoryService"
 )
 
 // UpsertInventoryBranch is the resolver for the upsertInventoryBranch field.
@@ -17,7 +16,7 @@ func (r *mutationResolver) UpsertInventoryBranch(ctx context.Context, input type
 	logctx := helper.LogContext(ClassName, "UpsertInventoryType")
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
-	return inventoryService.UpsertInventoryBranch(&input, userInfo)
+	return r.InventoryService.UpsertInventoryBranch(&input, userInfo)
 }
 
 // DeleteInventoryBranch is the resolver for the deleteInventoryBranch field.
@@ -25,7 +24,7 @@ func (r *mutationResolver) DeleteInventoryBranch(ctx context.Context, id string)
 	logctx := helper.LogContext(ClassName, "UpsertInventoryType")
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
-	return inventoryService.DeleteInventoryBranch(id, userInfo)
+	return r.InventoryService.DeleteInventoryBranch(id, userInfo)
 }
 
 // GetInventoryBranchs is the resolver for the getInventoryBranchs field.
@@ -33,5 +32,5 @@ func (r *queryResolver) GetInventoryBranchs(ctx context.Context, params *types.P
 	logctx := helper.LogContext(ClassName, "UpsertInventoryType")
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
-	return inventoryService.GetInventoryBranchs(params, userInfo)
+	return r.InventoryService.GetInventoryBranchs(params, userInfo)
 }

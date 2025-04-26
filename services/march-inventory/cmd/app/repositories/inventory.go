@@ -15,14 +15,17 @@ type InventoryRepository interface {
 	//branch
 	FindFirstInventoryBranch(params FindParams) (model.InventoryBranch, error)
 	FindInventoryBranch(params FindParams) (inventoryBranchs []model.InventoryBranch, err error)
+	SaveInventoryBranch(inventoryBranchData model.InventoryBranch) error
 
 	//brand
 	FindFirstInventoryBrand(params FindParams) (model.InventoryBrand, error)
 	FindInventoryBrand(params FindParams) (inventoryBrands []model.InventoryBrand, err error)
+	SaveInventoryBrand(inventoryBrandData model.InventoryBrand) error
 
 	//type
 	FindFirstInventoryType(params FindParams) (model.InventoryType, error)
 	FindInventoryType(params FindParams) (inventoryTypes []model.InventoryType, err error)
+	SaveInventoryType(inventoryTypeData model.InventoryType) error
 
 	//sub
 	DeleteSubInventory(checkIn interface{}, id string) error

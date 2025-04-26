@@ -17,3 +17,7 @@ func (r inventoryRepositoryDB) FindFirstInventoryType(params FindParams) (invent
 	}
 	return inventoryType, nil
 }
+
+func (r inventoryRepositoryDB) SaveInventoryType(inventoryTypeData model.InventoryType) error {
+	return r.gormDb.Omit("CreatedAt").Save(&inventoryTypeData).Error
+}

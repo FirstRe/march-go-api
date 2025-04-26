@@ -9,7 +9,6 @@ import (
 	"core/app/helper"
 	"core/app/middlewares"
 	"march-inventory/cmd/app/graph/types"
-	"march-inventory/cmd/app/services/inventoryService"
 
 	"github.com/99designs/gqlgen/graphql"
 )
@@ -19,7 +18,7 @@ func (r *mutationResolver) UploadInventory(ctx context.Context, file graphql.Upl
 	logctx := helper.LogContext(ClassName, "UploadInventory")
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
-	return inventoryService.UploadCsv(file, userInfo)
+	return r.InventoryService.UploadCsv(file, userInfo)
 }
 
 // UpsertInventory is the resolver for the upsertInventory field.

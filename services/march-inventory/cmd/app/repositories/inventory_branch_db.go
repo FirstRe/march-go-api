@@ -17,3 +17,7 @@ func (r inventoryRepositoryDB) FindFirstInventoryBranch(params FindParams) (inve
 	}
 	return inventoryBranch, nil
 }
+
+func (r inventoryRepositoryDB) SaveInventoryBranch(inventoryBranchData model.InventoryBranch) error {
+	return r.gormDb.Omit("CreatedAt").Save(&inventoryBranchData).Error
+}

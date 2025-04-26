@@ -10,16 +10,14 @@ import (
 	"core/app/middlewares"
 	graph "march-inventory/cmd/app/graph/generated"
 	"march-inventory/cmd/app/graph/types"
-	"march-inventory/cmd/app/services/inventoryService"
 )
 
 // UpsertInventoryBrand is the resolver for the upsertInventoryBrand field.
 func (r *mutationResolver) UpsertInventoryBrand(ctx context.Context, input types.UpsertInventoryBrandInput) (*types.MutationInventoryBrandResponse, error) {
 	logctx := helper.LogContext(ClassName, "UpsertInventoryBrand")
-	// userInfo := middlewares.UserInfo(ctx)
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
-	return inventoryService.UpsertInventoryBrand(&input, userInfo)
+	return r.InventoryService.UpsertInventoryBrand(&input, userInfo)
 }
 
 // DeleteInventoryBrand is the resolver for the deleteInventoryBrand field.
@@ -27,15 +25,15 @@ func (r *mutationResolver) DeleteInventoryBrand(ctx context.Context, id string) 
 	logctx := helper.LogContext(ClassName, "DeleteInventoryBrand")
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
-	return inventoryService.DeleteInventoryBrand(id, userInfo)
+	return r.InventoryService.DeleteInventoryBrand(id, userInfo)
 }
 
 // GetInventoryBrand is the resolver for the getInventoryBrand field.
 func (r *queryResolver) GetInventoryBrand(ctx context.Context, id *string) (*types.InventoryBrand, error) {
 	logctx := helper.LogContext(ClassName, "UpsertInventoryType")
 	// userInfo := middlewares.UserInfo(ctx)
-	logctx.Logger([]interface{}{}, "")
-	return inventoryService.GetInventoryBrand(id)
+	logctx.Logger(id, "id")
+	return r.InventoryService.GetInventoryBrand(id)
 }
 
 // GetInventoryBrands is the resolver for the getInventoryBrands field.
@@ -43,7 +41,7 @@ func (r *queryResolver) GetInventoryBrands(ctx context.Context, params *types.Pa
 	logctx := helper.LogContext(ClassName, "UpsertInventoryType")
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
-	return inventoryService.GetInventoryBrands(params, userInfo)
+	return r.InventoryService.GetInventoryBrands(params, userInfo)
 }
 
 // Mutation returns graph.MutationResolver implementation.

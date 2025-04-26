@@ -11,7 +11,6 @@ import (
 	"log"
 	graph "march-inventory/cmd/app/graph/generated"
 	"march-inventory/cmd/app/graph/types"
-	"march-inventory/cmd/app/services/inventoryService"
 )
 
 // Resolve the posts field in Author
@@ -34,7 +33,7 @@ func (r *mutationResolver) UpsertInventoryType(ctx context.Context, input types.
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
 
-	return inventoryService.UpsertInventoryType(&input, userInfo)
+	return r.InventoryService.UpsertInventoryType(&input, userInfo)
 }
 
 // DeleteInventoryType is the resolver for the deleteInventoryType field.
@@ -43,24 +42,24 @@ func (r *mutationResolver) DeleteInventoryType(ctx context.Context, id string) (
 	logctx := helper.LogContext(ClassName, "DeleteInventoryType")
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
-	return inventoryService.DeleteInventoryType(id, userInfo)
+	return r.InventoryService.DeleteInventoryType(id, userInfo)
 }
 
-// GetInventoryType is the resolver for the getInventoryType field.
+// GetInventoryType is the resolver for the getInvent oryType field.
 func (r *queryResolver) GetInventoryType(ctx context.Context, id *string) (*types.InventoryTypeResponse, error) {
 	logctx := helper.LogContext(ClassName, "GetInventoryType")
-	logctx.Logger([]interface{}{}, "")
+	logctx.Logger(id, "id")
 	// panic(fmt.Errorf("not implemented: GetInventoryTypes - getInventoryTypes"))
-	return inventoryService.GetInventoryType(id)
+	return r.InventoryService.GetInventoryType(id)
 }
 
 // GetInventoryTypes is the resolver for the getInventoryTypes field.
 func (r *queryResolver) GetInventoryTypes(ctx context.Context, params *types.ParamsInventoryType) (*types.InventoryTypesResponse, error) {
 	logctx := helper.LogContext(ClassName, "GetInventoryTypes")
-	logctx.Logger([]interface{}{params}, "param")
+	logctx.Logger(params, "params")
 	userInfo := middlewares.UserInfo(ctx)
 
-	return inventoryService.GetInventoryTypes(params, userInfo)
+	return r.InventoryService.GetInventoryTypes(params, userInfo)
 }
 
 // InventoryType returns graph.InventoryTypeResolver implementation.

@@ -17,3 +17,7 @@ func (r inventoryRepositoryDB) FindFirstInventoryBrand(params FindParams) (inven
 	}
 	return inventoryBrand, nil
 }
+
+func (r inventoryRepositoryDB) SaveInventoryBrand(inventoryBrandData model.InventoryBrand) error {
+	return r.gormDb.Omit("CreatedAt").Save(&inventoryBrandData).Error
+}
