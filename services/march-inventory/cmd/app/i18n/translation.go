@@ -21,10 +21,10 @@ func InitI18n() {
 	var filePathTh string
 	if dir == "/app/services/march-inventory/cmd/app" {
 		filePathEn = filepath.Join(dir, "i18n", "en", "en.json")
-		filePathTh = filepath.Join(dir, "i18n", "en", "en.json")
+		filePathTh = filepath.Join(dir, "i18n", "th", "th.json")
 	} else {
 		filePathEn = filepath.Join(dir, "cmd", "app", "i18n", "en", "en.json")
-		filePathTh = filepath.Join(dir, "cmd", "app", "i18n", "en", "en.json")
+		filePathTh = filepath.Join(dir, "cmd", "app", "i18n", "th", "th.json")
 	}
 
 	// Load message files

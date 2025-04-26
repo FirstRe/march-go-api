@@ -59,6 +59,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		if err != nil {
 			gqlErr = append(gqlErr, *gqlerror.Errorf("Unauthorized"))
 		}
+
 		fmt.Println("userInfo", userInfo)
 		var req GraphQLRequest
 
@@ -108,4 +109,18 @@ func UserInfo(ctx context.Context) UserClaims {
 	}
 
 	return claims
+}
+
+func I18nMiddleware(initLocalizer func(lang string)) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		lang := c.GetHeader("lang")
+		if lang == "" {
+			lang = c.GetHeader("Accept-Language")
+		}
+		if lang == "" {
+			lang = "en"
+		}
+		initLocalizer(lang)
+		c.Next()
+	}
 }

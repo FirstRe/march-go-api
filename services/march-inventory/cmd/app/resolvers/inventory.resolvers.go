@@ -87,5 +87,5 @@ func (r *queryResolver) GetInventoryAllDeleted(ctx context.Context) (*types.Dele
 	logctx := helper.LogContext(ClassName, "GetInventories")
 	userInfo := middlewares.UserInfo(ctx)
 	logctx.Logger(userInfo, "userInfo")
-	return inventoryService.GetInventoryAllDeleted(userInfo)
+	return r.InventoryService.GetInventoryAllDeleted(userInfo)
 }

@@ -107,6 +107,7 @@ func setupGinRouter(inventoryService newInventory.InventoryService) *gin.Engine 
 	}))
 
 	r.Use(middlewares.AuthMiddleware())
+	r.Use(middlewares.I18nMiddleware(translation.InitLocalizer))
 	r.POST("/graphql", graphqlHandler(inventoryService))
 	r.GET("/graphql/playground", playgroundHandler())
 	r.POST("/upload", func(c *gin.Context) {
@@ -156,7 +157,7 @@ func main() {
 	// if grpcPort == "" {
 	// 	grpcPort = defaultGrpcPort
 	// }
-	
+
 	redis.InitRedis()
 
 	translation.InitI18n()
