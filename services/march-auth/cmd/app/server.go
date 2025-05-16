@@ -104,7 +104,7 @@ func setupGinRouter() *gin.Engine {
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowHeaders:     []string{"*"},
-		AllowCredentials: true,
+		AllowCredentials: false,
 	}))
 
 	r.Use(middlewares.AuthMiddleware())
