@@ -7,6 +7,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
 )
 
 var Repos *gorm.DB
@@ -17,9 +18,12 @@ func Initialize() (*gorm.DB, error) {
 	dsn := os.Getenv("DATABASE_URL")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger:                 logger.Default.LogMode(logger.Info),
-		PrepareStmt:            true,
-		SkipDefaultTransaction: true,
-		TranslateError:         true,
+		// PrepareStmt:            true,
+		// SkipDefaultTransaction: true,
+		// TranslateError:         true,
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix: "march_inventory.",
+		},
 	})
 
 	if err != nil {
