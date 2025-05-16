@@ -16,15 +16,28 @@ var InventoryBrand *gorm.DB
 
 func Initialize() (*gorm.DB, error) {
 	dsn := os.Getenv("DATABASE_URL")
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger:                 logger.Default.LogMode(logger.Info),
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  dsn,
+		PreferSimpleProtocol: true, // disables implicit prepared statement usage
+	}), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
 		// PrepareStmt:            true,
+		PrepareStmt: false,
 		// SkipDefaultTransaction: true,
 		// TranslateError:         true,
 		NamingStrategy: schema.NamingStrategy{
 			TablePrefix: "march_inventory.",
 		},
 	})
+	// db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	// 	Logger:                 logger.Default.LogMode(logger.Info),
+	// 	// PrepareStmt:            true,
+	// 	// SkipDefaultTransaction: true,
+	// 	// TranslateError:         true,
+	// 	NamingStrategy: schema.NamingStrategy{
+	// 		TablePrefix: "march_inventory.",
+	// 	},
+	// })
 
 	if err != nil {
 		return nil, err
