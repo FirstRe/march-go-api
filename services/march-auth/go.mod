@@ -1,6 +1,6 @@
 module march-auth
 
-go 1.22
+go 1.23.8
 
 replace github.com/FirstRe/march-go-api/packages/core => ../../packages/core
 

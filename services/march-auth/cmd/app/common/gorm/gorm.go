@@ -6,6 +6,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
 )
 
 var Repos *gorm.DB
@@ -17,6 +18,9 @@ func Initialize() (*gorm.DB, error) {
 		PrepareStmt:            true,
 		SkipDefaultTransaction: true,
 		TranslateError:         true,
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix: "march_auth.",
+		},
 	})
 
 	if err != nil {
